@@ -28,6 +28,7 @@ const [
 const CLASS_HIDDEN = 'hidden';
 const CLASS_HIT = 'hit';
 const CLASS_FADED = 'faded';
+const CLASS_ACTIVE = 'active';
 
 const SIDE_A = 'a';
 const SIDE_B = 'b';
@@ -168,7 +169,8 @@ class Finger extends HTMLElement {
 		console.log('timestamp', timestamp);
 		if (!this[__playstart]) {
 			this[__playstart] = timestamp;
-			this._playNotes(patterns[this[__pattern]][this[__playhead]], SIDE_A);
+			const pattern = patterns[this[__pattern]];
+			this._playNotes(pattern[this[__playhead] % pattern.length], SIDE_A);
 			console.log('PLAY!');
 		}
 
@@ -277,7 +279,13 @@ class Finger extends HTMLElement {
 	}
 
 	_resetPatternUI() {
-		const [show, hide] = [this._show.bind(this), this._hide.bind(this)];
+		const [show, hide, active, inactive] = [
+			this._show.bind(this),
+			this._hide.bind(this),
+			this._active.bind(this),
+			this._inactive.bind(this)
+		];
+
 		for (let step = 0; step < 32; step++) {
 			// hide all outlines
 			hide(`#g${step}${step >= 22 && step <= 29 ? '_1_' : ''}`);
@@ -286,6 +294,17 @@ class Finger extends HTMLElement {
 			(this.playback ? (this[__playhead] || 0) + 1 : 0) %
 			patterns[this[__pattern]].length;
 		show(`#g${step}${step >= 22 && step <= 29 ? '_1_' : ''}`);
+
+		for (let key = 0; key < 7; key++) {
+			inactive(`#p${key}`);
+		}
+		active(`#p${this.pattern % 7}`);
+		hide(['#octhigh', '#octlow']);
+		if (this.pattern >= 7) {
+			show('#octhigh');
+		} else {
+			show('#octlow');
+		}
 	}
 
 	_resetDrums(side) {
@@ -440,6 +459,12 @@ class Finger extends HTMLElement {
 	}
 	_unfade(selector) {
 		asArray(selector).forEach(s => this._toggle(s, CLASS_FADED, false));
+	}
+	_active(selector) {
+		asArray(selector).forEach(s => this._toggle(s, CLASS_ACTIVE, true));
+	}
+	_inactive(selector) {
+		asArray(selector).forEach(s => this._toggle(s, CLASS_ACTIVE, false));
 	}
 	_toggle(selector, className, force) {
 		this.shadow.querySelector(selector).classList.toggle(className, force);

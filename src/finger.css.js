@@ -14,6 +14,14 @@ export default `
 :host .faded {
 	opacity: 0.2;
 }
+:host #keys > g > path {
+	stroke: #5E5F8F !important;
+}
+:host #keys .active > path {
+	stroke: #DFD9FF !important;
+	stroke-linecap: square !important;
+}
+
 :host .hit {
 	animation-name: hit;
 	animation-duration: var(--beat-s);
