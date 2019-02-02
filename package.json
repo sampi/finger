@@ -1,0 +1,19 @@
+{
+  "name": "@sampi/finger",
+  "version": "0.0.1",
+  "description": "Recreation of the OP-1's Finger sequencer using Web MIDI",
+  "scripts": {
+    "start": "npx @commonshost/server start --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write --config .prettierrc \"src/**/*.{js,json,css,html}\""
+  },
+  "repository": "github:sampi/finger.git",
+  "author": "Daniel Spitzer <sampi@sampi.io>",
+  "bugs": {
+    "url": "https://github.com/sampi/finger/issues"
+  },
+  "homepage": "https://github.com/sampi/finger#readme",
+  "devDependencies": {
+    "prettier": "^1.16.3"
+  }
+}
