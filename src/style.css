@@ -1,3 +1,7 @@
+:root {
+	--beat-s: 0.25s;
+}
+
 html,
 body {
 	margin: 0;
