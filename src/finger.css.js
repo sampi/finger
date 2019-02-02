@@ -9,7 +9,7 @@ export default `
 	height: 100%;
 }
 :host .hidden {
-	display: none;
+	opacity: 0;
 }
 :host .faded {
 	opacity: 0.2;
@@ -28,21 +28,15 @@ export default `
 	animation-iteration-count: infinite;
 }
 
-:host #ad0,
-:host #ad1,
-:host #bd0,
-:host #bd1 {
-	transform-box: fill-box;
-	transform-origin: center;
-	transform: scale(1);
-	opacity: 0;
-}
 :host #ad0.hit,
 :host #ad1.hit,
 :host #bd0.hit,
 :host #bd1.hit {
+	transform-box: fill-box;
+	transform-origin: center;
 	animation-name: kick-hit;
-	animation-duration: var(--beat-s);
+	transform: scale(1);
+	opacity: 0;
 }
 :host #ad0.hit > line,
 :host #ad1.hit > line,
@@ -69,7 +63,7 @@ export default `
 		transform: scale(0.8);
 		opacity:  1;
 	}
-	30% {
+	40% {
 		transform: scale(0.3);
 		opacity:  1;
 	}
@@ -85,11 +79,11 @@ export default `
 	from {
 		stroke-width: 1.5;
 	}
-	30% {
+	40% {
 		stroke-width: 2;
 	}
 	to {
-		stroke-width: 0.1;
+		stroke-width: 0.8;
 	}
 }
 
