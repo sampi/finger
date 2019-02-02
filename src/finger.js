@@ -104,7 +104,9 @@ class Finger extends HTMLElement {
 	}
 
 	set playback(playback) {
-		playback = playback === 'true';
+		playback =
+			(typeof playback === 'boolean' && playback) ||
+			(typeof playback === 'string' && playback === 'true');
 		if (this[__playback] !== playback) {
 			if (playback) {
 				this[__playhead] = 0;
@@ -121,8 +123,8 @@ class Finger extends HTMLElement {
 
 	set pattern(pattern) {
 		const [show, hide] = [this._show.bind(this), this._hide.bind(this)];
-		if (this[__pattern] !== pattern) {
-			this[__pattern] = pattern;
+		if (this[__pattern] !== parseInt(pattern, 10)) {
+			this[__pattern] = parseInt(pattern, 10);
 			this.setAttribute('pattern', pattern);
 			const currentPattern = patterns[this[__pattern]];
 			this._resetPatternUI();
@@ -145,13 +147,16 @@ class Finger extends HTMLElement {
 			}
 		}
 	}
+	get pattern() {
+		return this[__pattern];
+	}
 
 	set bpm(bpm) {
 		if (Math.abs(parseFloat(this[__bpm]) - parseFloat(bpm)) > Number.EPSILON) {
 			this[__bpm] = parseFloat(bpm);
-			this[__stepduration] = (60.0 / this[__bpm] / 4.0) * 1000.0;
+			this[__stepduration] = 60.0 / this[__bpm] / 4.0;
 			this.setAttribute('bpm', parseFloat(bpm));
-			this.style.setProperty('--beat-s', this[__stepduration] / 1000.0 + 's');
+			this.style.setProperty('--beat-s', this[__stepduration] + 's');
 		}
 	}
 
@@ -160,12 +165,20 @@ class Finger extends HTMLElement {
 	}
 
 	_playBeat(timestamp) {
+		console.log('timestamp', timestamp);
 		if (!this[__playstart]) {
 			this[__playstart] = timestamp;
 			this._playNotes(patterns[this[__pattern]][this[__playhead]], SIDE_A);
+			console.log('PLAY!');
 		}
-		const progress = timestamp - this[__playstart];
-		if (progress >= this[__stepduration]) {
+
+		// We need to add 2 frames to the progress,
+		// because we schedule them in the current frame,
+		// to be played back in the next frame
+		const twoframes = (1000 / 60) * 2;
+		const progress = timestamp - this[__playstart] + twoframes;
+		if (progress >= this[__stepduration] * 1000.0) {
+			console.log('progress', progress);
 			this[__playstart] = null;
 			this[__playhead] = ++this[__playhead] % patterns[this[__pattern]].length;
 		}
@@ -194,19 +207,15 @@ class Finger extends HTMLElement {
 		if (this[__midi]) {
 			for (var output of this[__midi].outputs.values()) {
 				if (this[__prevnotes] !== null) {
-					console.log('STOP', this[__prevnotes][0]);
 					output.send([128, this[__prevnotes][0], 127]);
 					if (this[__prevnotes][1]) {
-						console.log('STOP', this[__prevnotes][1]);
 						output.send([128, this[__prevnotes][1], 127]);
 					}
 				}
 
 				if (notes !== null) {
-					console.log('SEND', m(notesArr[0]));
 					output.send([144, m(notesArr[0]), 127]);
 					if (notesArr[1]) {
-						console.log('SEND', m(notesArr[1]));
 						output.send([144, m(notesArr[1]), 127]);
 					}
 				}
@@ -280,21 +289,41 @@ class Finger extends HTMLElement {
 	}
 
 	_resetDrums(side) {
-		const [show, hide] = [this._show.bind(this), this._hide.bind(this)];
+		const [show, hide, fade, unfade] = [
+			this._show.bind(this),
+			this._hide.bind(this),
+			this._fade.bind(this),
+			this._unfade.bind(this)
+		];
 
 		const resetA = !side || side === SIDE_A;
 		const resetB = !side || side === SIDE_B;
 
 		show('#drum');
 
-		resetA && show('#druma');
-		resetB && show('#drumb');
+		if (resetA) {
+			show('#druma');
+			hide([
+				HAND_LEFT(SIDE_A),
+				HAND_RIGHT(SIDE_A),
+				FACE(0)(SIDE_A),
+				FACE(1)(SIDE_A)
+			]);
 
-		resetA && hide([HAND_LEFT(SIDE_A), HAND_RIGHT(SIDE_A)]);
-		resetB && hide([HAND_LEFT(SIDE_B), HAND_RIGHT(SIDE_B)]);
+			!this.playback ? fade(COWBELL(SIDE_A)) : unfade(COWBELL(SIDE_A));
+		}
 
-		resetA && hide(['#face00', '#face01_1_']);
-		resetB && hide(['#face10_1_', '#face11']);
+		if (resetB) {
+			show('#drumb');
+			hide([
+				HAND_LEFT(SIDE_B),
+				HAND_RIGHT(SIDE_B),
+				FACE(0)(SIDE_B),
+				FACE(1)(SIDE_B)
+			]);
+
+			!this.playback ? fade(COWBELL(SIDE_B)) : unfade(COWBELL(SIDE_B));
+		}
 
 		for (let i = 0; i <= 11; i++) {
 			if (i > 1 && i <= 5) {
@@ -314,26 +343,28 @@ class Finger extends HTMLElement {
 	}
 
 	_idleDrums(side) {
-		const [show, hide, fade] = [
-			this._show.bind(this),
-			this._hide.bind(this),
-			this._fade.bind(this)
-		];
+		const [show] = [this._show.bind(this)];
 
 		const idleA = !side || side === SIDE_A;
 		const idleB = !side || side === SIDE_B;
 
-		idleA &&
-			show([HAND_LEFT(SIDE_A), HAND_RIGHT(SIDE_A), '#face00', COWBELL(SIDE_A)]);
-		!this.playback && idleA && fade(COWBELL(SIDE_A));
-		idleB &&
+		if (idleA) {
+			show([
+				HAND_LEFT(SIDE_A),
+				HAND_RIGHT(SIDE_A),
+				FACE(0)(SIDE_A),
+				COWBELL(SIDE_A)
+			]);
+		}
+
+		if (idleB) {
 			show([
 				HAND_LEFT(SIDE_B),
 				HAND_RIGHT(SIDE_B),
-				'#face10_1_',
+				FACE(0)(SIDE_B),
 				COWBELL(SIDE_B)
 			]);
-		!this.playback && idleB && fade(COWBELL(SIDE_B));
+		}
 	}
 
 	_initMIDI() {
@@ -351,14 +382,34 @@ class Finger extends HTMLElement {
 				}
 			};
 
+			const patterns = [];
+
 			const getMIDIMessage = message => {
 				var command = message.data[0];
 				var note = message.data[1];
 				var velocity = message.data.length > 2 ? message.data[2] : 0; // a velocity value might not be included with a noteOff command
 
-				if (command === 144 && whiteKeys[note] !== undefined) {
-					console.log('getMIDIMessage', { note });
-					this.setAttribute('pattern', whiteKeys[note]);
+				if (
+					command === 144 &&
+					velocity !== 0 &&
+					whiteKeys[note] !== undefined
+				) {
+					this.pattern = whiteKeys[note];
+					this.playback = true;
+					patterns.push(this.pattern);
+					console.log('play', { command, note, velocity }, patterns.length);
+				} else if ((command === 144 && !velocity) || command === 128) {
+					const idx = patterns.lastIndexOf(whiteKeys[note]);
+					if (idx !== -1) {
+						patterns.splice(idx, 1);
+					}
+
+					if (patterns.length === 0) {
+						this.playback = false;
+						console.log('stop', { command, note, velocity }, patterns.length);
+					} else {
+						this.pattern = patterns[patterns.length - 1];
+					}
 				}
 			};
 

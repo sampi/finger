@@ -17,7 +17,7 @@ export default `
 :host .hit {
 	animation-name: hit;
 	animation-duration: var(--beat-s);
-	/* animation-timing-function: ease-in-out; */
+	animation-iteration-count: infinite;
 }
 
 :host #ad0,
@@ -35,7 +35,6 @@ export default `
 :host #bd1.hit {
 	animation-name: kick-hit;
 	animation-duration: var(--beat-s);
-	animation-timing-function: /* ease-in */;
 }
 :host #ad0.hit > line,
 :host #ad1.hit > line,
@@ -43,9 +42,6 @@ export default `
 :host #bd1.hit > line{
 	animation-name: kick-hit-line;
 	animation-duration: var(--beat-s);
-	animation-direction: normal;
-	animation-iteration-count: 1;
-	/* animation-timing-function: ease-in; */
 }
 
 @keyframes hit {
