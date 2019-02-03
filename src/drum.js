@@ -1,3 +1,5 @@
+import * as c from './constants.js';
+
 export default [
 	// 0 F kick:
 	{ face: 5, hands: 'lr', layer: '#$d0' },
@@ -66,3 +68,17 @@ export default [
 	// 22 D# 'bass-4': '',
 	// 23 E 'bass-5': ''
 ];
+
+export const HAND_LEFT = side => '#$hand_x5F_left'.replace('$', side);
+export const HAND_RIGHT = side => '#$hand_x5F_right'.replace('$', side);
+export const COWBELL = side => '#cowbell$'.replace('$', side);
+export const FACE = type => side => {
+	switch (type) {
+		case 0:
+			return '#' + (side === c.SIDE_A ? 'face00' : 'face10_1_');
+		case 1:
+			return '#' + (side === c.SIDE_A ? 'face01_1_' : 'face11');
+		default:
+			return `#face${side === c.SIDE_A ? 0 : 1}${type}`;
+	}
+};

@@ -1,65 +1,40 @@
-import patterns from './patterns.js';
-import drum from './drum.js';
+import { drumPatterns } from './patterns.js';
+import drum, { HAND_LEFT, HAND_RIGHT, COWBELL, FACE } from './drum.js';
 import { whiteKeys, n, m } from './notes.js';
 import css from './finger.css.js';
+import * as c from './constants.js';
+import { asArray, stringBool } from './utils.js';
 
-const [
-	__instrument,
-	__playback,
-	__playhead,
-	__playstart,
-	__pattern,
-	__bpm,
-	__stepduration,
-	__midi,
-	__prevnotes
+export const [
+	$playback,
+	$drumPlayhead,
+	$drumTimer,
+	$drumPattern,
+	$bpm,
+	$stepDuration,
+	$midi,
+	$activeNotes
 ] = [
-	Symbol('instrument'),
 	Symbol('playback'),
-	Symbol('playhead'),
-	Symbol('playstart'),
-	Symbol('playpattern'),
+	Symbol('drumPlayhead'),
+	Symbol('drumTimer'),
+	Symbol('drumPattern'),
 	Symbol('bpm'),
-	Symbol('stepduration'),
+	Symbol('stepDuration'),
 	Symbol('midi'),
-	Symbol('prevnotes')
+	Symbol('activeNotes')
 ];
-
-const CLASS_HIDDEN = 'hidden';
-const CLASS_HIT = 'hit';
-const CLASS_FADED = 'faded';
-const CLASS_ACTIVE = 'active';
-
-const SIDE_A = 'a';
-const SIDE_B = 'b';
-
-const SIDE_LEFT = 'l';
-const SIDE_RIGHT = 'r';
-
-const HAND_LEFT = side => '#$hand_x5F_left'.replace('$', side);
-const HAND_RIGHT = side => '#$hand_x5F_right'.replace('$', side);
-const COWBELL = side => '#cowbell$'.replace('$', side);
-const FACE = type => side => {
-	switch (type) {
-		case 0:
-			return '#' + (side === SIDE_A ? 'face00' : 'face10_1_');
-		case 1:
-			return '#' + (side === SIDE_A ? 'face01_1_' : 'face11');
-		default:
-			return `#face${side === SIDE_A ? 0 : 1}${type}`;
-	}
-};
 
 class Finger extends HTMLElement {
 	static get observedAttributes() {
-		return ['instrument', 'playback', 'pattern', 'bpm'];
+		return ['playback', 'drum-pattern', 'bpm'];
 	}
 	constructor() {
 		super();
 
-		this[__playback] = false;
-		this[__bpm] = parseFloat(1000);
-		this[__prevnotes] = null;
+		this[$playback] = false;
+		this[$bpm] = parseFloat(60);
+		this[$activeNotes] = null;
 
 		this._initMIDI();
 
@@ -77,141 +52,145 @@ class Finger extends HTMLElement {
 
 	connectedCallback() {
 		this._resetUI();
+
+		this._hide('#synth');
+
+		this._resetDrums();
 		this._idleDrums();
+
+		this.addEventListener('click', () => (this.playback = !this.playback));
+
+		this.shadow.querySelector('#octhigh').addEventListener('click', () => {
+			this._toggle('#octhigh', c.CLASS_HIDDEN, true);
+			this._toggle('#octlow', c.CLASS_HIDDEN, false);
+		});
+		this.shadow.querySelector('#octlow').addEventListener('click', () => {
+			this._toggle('#octhigh', c.CLASS_HIDDEN, false);
+			this._toggle('#octlow', c.CLASS_HIDDEN, true);
+		});
+
+		for (let k = 0; k < 7; k++) {
+			this.shadow.querySelector(`#p${k}`).addEventListener('click', evt => {
+				evt.stopPropagation();
+				if (
+					this.shadow
+						.querySelector('#octhigh')
+						.classList.contains(c.CLASS_HIDDEN)
+				) {
+					this.drumPattern = k;
+				} else {
+					console.log('synthpattern', k);
+				}
+			});
+		}
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
+		if (name === 'drum-pattern') {
+			name = 'drumPattern';
+		}
 		this[name] = newVal;
 	}
 
-	set instrument(instrument) {
-		const [show, hide] = [this._show.bind(this), this._hide.bind(this)];
-
-		if (instrument !== this[__instrument]) {
-			switch (instrument) {
-				case 'drum':
-					hide('#synth');
-					this._resetDrums();
-					break;
-				case 'synth':
-					alert('unsupported feature :(');
-					break;
-			}
-		}
-		this[__instrument] = instrument;
-	}
-	get instrument() {
-		return this[__instrument];
-	}
-
 	set playback(playback) {
-		playback =
-			(typeof playback === 'boolean' && playback) ||
-			(typeof playback === 'string' && playback === 'true');
-		if (this[__playback] !== playback) {
+		playback = stringBool(playback);
+		if (this[$playback] !== playback) {
 			if (playback) {
-				this[__playhead] = 0;
-				this[__playstart] = null;
+				this[$drumPlayhead] = 0;
+				this[$drumTimer] = null;
 				requestAnimationFrame(this._playBeat.bind(this));
 			}
-			this[__playback] = playback;
+			this[$playback] = playback;
 			this.setAttribute('playback', playback);
 		}
 	}
 	get playback() {
-		return this[__playback];
+		return this[$playback];
 	}
 
-	set pattern(pattern) {
-		const [show, hide] = [this._show.bind(this), this._hide.bind(this)];
-		if (this[__pattern] !== parseInt(pattern, 10)) {
-			this[__pattern] = parseInt(pattern, 10);
-			this.setAttribute('pattern', pattern);
-			const currentPattern = patterns[this[__pattern]];
-			this._resetPatternUI();
+	set drumPattern(drumPattern) {
+		if (this[$drumPattern] !== parseInt(drumPattern, 10)) {
+			this[$drumPattern] = parseInt(drumPattern, 10);
+			this.setAttribute('drumPattern', drumPattern);
+			const currentdrumPattern = drumPatterns[this[$drumPattern]];
+			this._resetDrumPatternUI();
 			for (let step = 0; step < 32; step++) {
 				// hide steps that aren't active
-				if (step >= currentPattern.length) {
-					hide(`#x${step}`);
-					hide(`#g${step}bg`);
+				if (step >= currentdrumPattern.length) {
+					this._hide(`#x${step}`);
+					this._hide(`#g${step}bg`);
 					continue;
 				} else {
-					show(`#g${step}bg`);
+					this._show(`#g${step}bg`);
 				}
 
 				// hide empty active steps
-				if (currentPattern[step] === null) {
-					hide(`#x${step}`);
+				if (currentdrumPattern[step] === null) {
+					this._hide(`#x${step}`);
 				} else {
-					show(`#x${step}`);
+					this._show(`#x${step}`);
 				}
 			}
 		}
 	}
-	get pattern() {
-		return this[__pattern];
+	get drumPattern() {
+		return this[$drumPattern];
 	}
 
 	set bpm(bpm) {
-		if (Math.abs(parseFloat(this[__bpm]) - parseFloat(bpm)) > Number.EPSILON) {
-			this[__bpm] = parseFloat(bpm);
-			this[__stepduration] = 60.0 / this[__bpm] / 4.0;
+		if (Math.abs(parseFloat(this[$bpm]) - parseFloat(bpm)) > Number.EPSILON) {
+			this[$bpm] = parseFloat(bpm);
+			this[$stepDuration] = 60.0 / this[$bpm] / 4.0;
 			this.setAttribute('bpm', parseFloat(bpm));
-			this.style.setProperty('--beat-s', this[__stepduration] + 's');
+			this.style.setProperty('--beat-s', this[$stepDuration] + 's');
 		}
 	}
 
 	get bpm() {
-		return this[__bpm];
+		return this[$bpm];
 	}
 
 	_playBeat(timestamp) {
-		console.log('timestamp', timestamp);
-		if (!this[__playstart]) {
-			this[__playstart] = timestamp;
-			const pattern = patterns[this[__pattern]];
-			this._playNotes(pattern[this[__playhead] % pattern.length], SIDE_A);
-			console.log('PLAY!');
+		if (!this[$drumTimer]) {
+			this[$drumTimer] = timestamp;
+			const drumPattern = drumPatterns[this[$drumPattern]];
+			this._playNotes(
+				drumPattern[this[$drumPlayhead] % drumPattern.length],
+				c.SIDE_A
+			);
 		}
 
 		// We need to add 2 frames to the progress,
 		// because we schedule them in the current frame,
 		// to be played back in the next frame
 		const twoframes = (1000 / 60) * 2;
-		const progress = timestamp - this[__playstart] + twoframes;
-		if (progress >= this[__stepduration] * 1000.0) {
-			console.log('progress', progress);
-			this[__playstart] = null;
-			this[__playhead] = ++this[__playhead] % patterns[this[__pattern]].length;
+		const progress = timestamp - this[$drumTimer] + twoframes;
+		if (progress >= this[$stepDuration] * 1000.0) {
+			this[$drumTimer] = null;
+
+			this[$drumPlayhead] =
+				++this[$drumPlayhead] % drumPatterns[this[$drumPattern]].length;
 		}
-		if (this[__playback]) {
+		if (this[$playback]) {
 			requestAnimationFrame(this._playBeat.bind(this));
 		} else {
-			this._resetDrums(SIDE_A);
-			this._idleDrums(SIDE_A);
+			this._resetDrums(c.SIDE_A);
+			this._idleDrums(c.SIDE_A);
 		}
 	}
 	_playNotes(notes, side) {
-		const [show, hide, fade, unfade, hit] = [
-			this._show.bind(this),
-			this._hide.bind(this),
-			this._fade.bind(this),
-			this._unfade.bind(this),
-			this._hit.bind(this)
-		];
-
-		this._resetPatternUI();
+		this._resetDrumPatternUI();
 
 		this._resetDrums(side);
 
 		const notesArr = asArray(notes);
 
-		if (this[__midi]) {
-			for (var output of this[__midi].outputs.values()) {
-				if (this[__prevnotes] !== null) {
-					output.send([128, this[__prevnotes][0], 127]);
-					if (this[__prevnotes][1]) {
-						output.send([128, this[__prevnotes][1], 127]);
+		if (this[$midi]) {
+			for (var output of this[$midi].outputs.values()) {
+				if (this[$activeNotes] !== null) {
+					output.send([128, this[$activeNotes][0], 127]);
+					if (this[$activeNotes][1]) {
+						output.send([128, this[$activeNotes][1], 127]);
 					}
 				}
 
@@ -225,33 +204,36 @@ class Finger extends HTMLElement {
 		}
 
 		if (notes === null) {
-			this[__prevnotes] = null;
+			this[$activeNotes] = null;
 			return this._idleDrums(side);
 		}
 
-		this[__prevnotes] = [m(notesArr[0])];
+		this[$activeNotes] = [m(notesArr[0])];
 		if (notesArr[1]) {
-			this[__prevnotes].push(m(notesArr[1]));
+			this[$activeNotes].push(m(notesArr[1]));
 		}
 
 		const note0 = drum[notesArr[0] % drum.length];
 		const note1 = drum[notesArr[1] % drum.length] || note0;
 
-		show(FACE(note0.face)(side));
+		this._show(FACE(note0.face)(side));
 
 		const layer0 = note0.layer.replace('$', side);
-		show(layer0);
-		hit(layer0);
+		this._show(layer0);
+		this._hit(layer0);
 
-		note0.hands.includes(SIDE_LEFT) && note1.hands.includes(SIDE_LEFT)
-			? show(HAND_LEFT(side))
-			: hide(HAND_LEFT(side));
-		note0.hands.includes(SIDE_RIGHT) && note1.hands.includes(SIDE_RIGHT)
-			? show(HAND_RIGHT(side))
-			: hide(HAND_RIGHT(side));
-		note0.cowbell === false || note1.cowbell === false
-			? hide(COWBELL(side))
-			: show(COWBELL(side));
+		const hideLeftHand = !(
+			note0.hands.includes(c.SIDE_LEFT) && note1.hands.includes(c.SIDE_LEFT)
+		);
+		this._toggle(HAND_LEFT(side), c.CLASS_HIDDEN, hideLeftHand);
+
+		const hideRightHand = !(
+			note0.hands.includes(c.SIDE_RIGHT) && note1.hands.includes(c.SIDE_RIGHT)
+		);
+		this._toggle(HAND_RIGHT(side), c.CLASS_HIDDEN, hideRightHand);
+
+		const hideCowbell = note0.cowbell === false || note1.cowbell === false;
+		this._toggle(COWBELL(side), c.CLASS_HIDDEN, hideCowbell);
 
 		if (
 			note0.hands === 'lr' ||
@@ -259,14 +241,13 @@ class Finger extends HTMLElement {
 			(note0.cowbell === false || note1.cowbell === false)
 		) {
 			const layer1 = note1.layer.replace('$', side);
-			show(layer1);
-			hit(layer1);
+			this._show(layer1);
+			this._hit(layer1);
 		}
 	}
 
 	_resetUI() {
-		const [hide, fade] = [this._hide.bind(this), this._fade.bind(this)];
-		hide([
+		this._hide([
 			'#replace',
 			'#fillin_1_',
 			'#chain',
@@ -275,113 +256,102 @@ class Finger extends HTMLElement {
 			'#octdown',
 			'#octup'
 		]);
-		fade('#hold');
+		this._fade('#hold');
 	}
 
-	_resetPatternUI() {
-		const [show, hide, active, inactive] = [
-			this._show.bind(this),
-			this._hide.bind(this),
-			this._active.bind(this),
-			this._inactive.bind(this)
-		];
+	_resetKeysUI() {
+		for (let key = 0; key < 7; key++) {
+			this._toggle(`#p${key}`, c.CLASS_ACTIVE, false);
+		}
+	}
 
+	_resetDrumPatternUI() {
 		for (let step = 0; step < 32; step++) {
 			// hide all outlines
-			hide(`#g${step}${step >= 22 && step <= 29 ? '_1_' : ''}`);
+			this._hide(`#g${step}${step >= 22 && step <= 29 ? '_1_' : ''}`);
 		}
 		let step =
-			(this.playback ? (this[__playhead] || 0) + 1 : 0) %
-			patterns[this[__pattern]].length;
-		show(`#g${step}${step >= 22 && step <= 29 ? '_1_' : ''}`);
+			(this.playback ? (this[$drumPlayhead] || 0) + 1 : 0) %
+			drumPatterns[this[$drumPattern]].length;
+		this._show(`#g${step}${step >= 22 && step <= 29 ? '_1_' : ''}`);
 
-		for (let key = 0; key < 7; key++) {
-			inactive(`#p${key}`);
-		}
-		active(`#p${this.pattern % 7}`);
-		hide(['#octhigh', '#octlow']);
-		if (this.pattern >= 7) {
-			show('#octhigh');
+		this._resetKeysUI();
+		this._toggle(`#p${this.drumPattern % 7}`, c.CLASS_ACTIVE, true);
+
+		this._hide(['#octhigh', '#octlow']);
+		if (this.drumPattern >= 7) {
+			this._show('#octhigh');
 		} else {
-			show('#octlow');
+			this._show('#octlow');
 		}
 	}
 
 	_resetDrums(side) {
-		const [show, hide, fade, unfade] = [
-			this._show.bind(this),
-			this._hide.bind(this),
-			this._fade.bind(this),
-			this._unfade.bind(this)
-		];
+		const resetA = !side || side === c.SIDE_A;
+		const resetB = !side || side === c.SIDE_B;
 
-		const resetA = !side || side === SIDE_A;
-		const resetB = !side || side === SIDE_B;
-
-		show('#drum');
+		this._show('#drum');
 
 		if (resetA) {
-			show('#druma');
-			hide([
-				HAND_LEFT(SIDE_A),
-				HAND_RIGHT(SIDE_A),
-				FACE(0)(SIDE_A),
-				FACE(1)(SIDE_A)
+			this._show('#druma');
+			this._hide([
+				HAND_LEFT(c.SIDE_A),
+				HAND_RIGHT(c.SIDE_A),
+				FACE(0)(c.SIDE_A),
+				FACE(1)(c.SIDE_A)
 			]);
 
-			!this.playback ? fade(COWBELL(SIDE_A)) : unfade(COWBELL(SIDE_A));
+			this._toggle(COWBELL(c.SIDE_A), c.CLASS_FADED, !this.playback);
 		}
 
 		if (resetB) {
-			show('#drumb');
-			hide([
-				HAND_LEFT(SIDE_B),
-				HAND_RIGHT(SIDE_B),
-				FACE(0)(SIDE_B),
-				FACE(1)(SIDE_B)
+			this._show('#drumb');
+			this._hide([
+				HAND_LEFT(c.SIDE_B),
+				HAND_RIGHT(c.SIDE_B),
+				FACE(0)(c.SIDE_B),
+				FACE(1)(c.SIDE_B)
 			]);
 
-			!this.playback ? fade(COWBELL(SIDE_B)) : unfade(COWBELL(SIDE_B));
+			this._toggle(COWBELL(c.SIDE_B), c.CLASS_FADED, !this.playback);
 		}
 
 		for (let i = 0; i <= 11; i++) {
 			if (i > 1 && i <= 5) {
-				resetA && hide(`#face0${i}`);
-				resetB && hide(`#face1${i}`);
+				resetA && this._hide(`#face0${i}`);
+				resetB && this._hide(`#face1${i}`);
 			}
 			if (i === 10) {
 				// Hide cowbell
-				resetA && hide('#ad10_1_');
-				resetB && hide('#bd10_1_');
+				resetA && this._hide('#ad10_1_');
+				resetB && this._hide('#bd10_1_');
 				continue;
 			}
 
-			resetA && hide(`#ad${i}`);
-			resetB && hide(`#bd${i}`);
+			resetA && this._hide(`#ad${i}`);
+			resetB && this._hide(`#bd${i}`);
 		}
 	}
 
 	_idleDrums(side) {
-		const [show] = [this._show.bind(this)];
-
-		const idleA = !side || side === SIDE_A;
-		const idleB = !side || side === SIDE_B;
+		const idleA = !side || side === c.SIDE_A;
+		const idleB = !side || side === c.SIDE_B;
 
 		if (idleA) {
-			show([
-				HAND_LEFT(SIDE_A),
-				HAND_RIGHT(SIDE_A),
-				FACE(0)(SIDE_A),
-				COWBELL(SIDE_A)
+			this._show([
+				HAND_LEFT(c.SIDE_A),
+				HAND_RIGHT(c.SIDE_A),
+				FACE(0)(c.SIDE_A),
+				COWBELL(c.SIDE_A)
 			]);
 		}
 
 		if (idleB) {
-			show([
-				HAND_LEFT(SIDE_B),
-				HAND_RIGHT(SIDE_B),
-				FACE(0)(SIDE_B),
-				COWBELL(SIDE_B)
+			this._show([
+				HAND_LEFT(c.SIDE_B),
+				HAND_RIGHT(c.SIDE_B),
+				FACE(0)(c.SIDE_B),
+				COWBELL(c.SIDE_B)
 			]);
 		}
 	}
@@ -389,7 +359,7 @@ class Finger extends HTMLElement {
 	_initMIDI() {
 		if (navigator.requestMIDIAccess) {
 			const onMIDISuccess = midiAccess => {
-				this[__midi] = midiAccess;
+				this[$midi] = midiAccess;
 
 				for (var input of midiAccess.inputs.values()) {
 					console.log(`MIDI IN: ${input.manufacturer} - ${input.name}`);
@@ -401,7 +371,7 @@ class Finger extends HTMLElement {
 				}
 			};
 
-			const patterns = [];
+			const drumPatterns = [];
 
 			const getMIDIMessage = message => {
 				var command = message.data[0];
@@ -413,21 +383,19 @@ class Finger extends HTMLElement {
 					velocity !== 0 &&
 					whiteKeys[note] !== undefined
 				) {
-					this.pattern = whiteKeys[note];
+					this.drumPattern = whiteKeys[note];
 					this.playback = true;
-					patterns.push(this.pattern);
-					console.log('play', { command, note, velocity }, patterns.length);
+					drumPatterns.push(this.drumPattern);
 				} else if ((command === 144 && !velocity) || command === 128) {
-					const idx = patterns.lastIndexOf(whiteKeys[note]);
+					const idx = drumPatterns.lastIndexOf(whiteKeys[note]);
 					if (idx !== -1) {
-						patterns.splice(idx, 1);
+						drumPatterns.splice(idx, 1);
 					}
 
-					if (patterns.length === 0) {
+					if (drumPatterns.length === 0) {
 						this.playback = false;
-						console.log('stop', { command, note, velocity }, patterns.length);
 					} else {
-						this.pattern = patterns[patterns.length - 1];
+						this.drumPattern = drumPatterns[drumPatterns.length - 1];
 					}
 				}
 			};
@@ -443,28 +411,25 @@ class Finger extends HTMLElement {
 	}
 
 	_hit(selector) {
-		asArray(selector).forEach(s => this._toggle(s, CLASS_HIT, true));
+		asArray(selector).forEach(s => this._toggle(s, c.CLASS_HIT, true));
 	}
 	_hide(selector) {
 		asArray(selector).forEach(s => {
-			this._toggle(s, CLASS_HIDDEN, true);
-			this._toggle(s, CLASS_HIT, false);
+			this._toggle(s, c.CLASS_HIDDEN, true);
+			this._toggle(s, c.CLASS_HIT, false);
 		});
 	}
 	_show(selector) {
-		asArray(selector).forEach(s => this._toggle(s, CLASS_HIDDEN, false));
+		asArray(selector).forEach(s => this._toggle(s, c.CLASS_HIDDEN, false));
 	}
 	_fade(selector) {
-		asArray(selector).forEach(s => this._toggle(s, CLASS_FADED, true));
-	}
-	_unfade(selector) {
-		asArray(selector).forEach(s => this._toggle(s, CLASS_FADED, false));
+		asArray(selector).forEach(s => this._toggle(s, c.CLASS_FADED, true));
 	}
 	_active(selector) {
-		asArray(selector).forEach(s => this._toggle(s, CLASS_ACTIVE, true));
+		asArray(selector).forEach(s => this._toggle(s, c.CLASS_ACTIVE, true));
 	}
 	_inactive(selector) {
-		asArray(selector).forEach(s => this._toggle(s, CLASS_ACTIVE, false));
+		asArray(selector).forEach(s => this._toggle(s, c.CLASS_ACTIVE, false));
 	}
 	_toggle(selector, className, force) {
 		this.shadow.querySelector(selector).classList.toggle(className, force);
@@ -472,7 +437,3 @@ class Finger extends HTMLElement {
 }
 
 customElements.define('finger-sequencer', Finger);
-
-function asArray(thing) {
-	return Array.isArray(thing) ? thing : [thing];
-}

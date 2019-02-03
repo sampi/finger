@@ -4,6 +4,10 @@
  */
 export default `
 
+:host {
+	cursor: pointer;
+}
+
 :host > svg {
 	width: 100%;
 	height: 100%;
@@ -13,6 +17,9 @@ export default `
 }
 :host .faded {
 	opacity: 0.2;
+}
+:host #keys > g {
+	pointer-events: bounding-box;
 }
 :host #keys > g > path {
 	stroke: #5E5F8F !important;

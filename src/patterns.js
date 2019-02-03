@@ -1,6 +1,6 @@
 import { n } from './notes.js';
 
-export default [
+export const drumPatterns = [
 	// F
 	[
 		[n(53)],
