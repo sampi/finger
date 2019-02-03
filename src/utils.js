@@ -1,5 +1,5 @@
-export function asArray(thing) {
-	return Array.isArray(thing) ? thing : [thing];
+export function asArrayLike(thing) {
+	return Array.isArray(thing) || thing instanceof NodeList ? thing : [thing];
 }
 export function stringBool(thing) {
 	return (
