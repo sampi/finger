@@ -69,8 +69,8 @@ export default [
 	// 23 E 'bass-5': ''
 ];
 
-export const HAND_LEFT = '#ahand_x5F_left';
-export const HAND_RIGHT = '#ahand_x5F_right';
+export const DRUM_HAND_LEFT = '#ahand_x5F_left';
+export const DRUM_HAND_RIGHT = '#ahand_x5F_right';
 export const COWBELL = '#cowbella';
 export const FACE = type => {
 	switch (type) {

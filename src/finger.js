@@ -1,11 +1,18 @@
 import { drumPatterns, synthPatterns } from './patterns.js';
-import drum, { HAND_LEFT, HAND_RIGHT, COWBELL, FACE } from './drum.js';
+import drum, {
+	DRUM_HAND_LEFT,
+	DRUM_HAND_RIGHT,
+	COWBELL,
+	FACE
+} from './drum.js';
 import {
 	SYNTH_LEFT,
 	SYNTH_BITS_LEFT,
-	KEY_GUIDE_RIGHT,
-	PLAY_HAND_LEFT,
-	PLAY_HAND_RIGHT
+	KEY_GUIDE,
+	SYNTH_IDLE_HAND_LEFT,
+	SYNTH_IDLE_HAND_RIGHT,
+	SYNTH_PLAY_HAND_LEFT,
+	SYNTH_PLAY_HAND_RIGHT
 } from './synth.js';
 import MIDI, { whiteKeys, idxToMidi } from './midi.js';
 import css from './finger.css.js';
@@ -30,7 +37,8 @@ export const [
 	$activeSynthNotes,
 	$controlChannel,
 	$drumChannel,
-	$synthChannel
+	$synthChannel,
+	$synthKeyX
 ] = [
 	Symbol('playback'),
 	Symbol('drumPlayback'),
@@ -49,7 +57,8 @@ export const [
 	Symbol('activeSynthNotes'),
 	Symbol('controlChannel'),
 	Symbol('drumChannel'),
-	Symbol('synthChannel')
+	Symbol('synthChannel'),
+	Symbol('synthKeyX')
 ];
 
 class Finger extends HTMLElement {
@@ -106,11 +115,13 @@ class Finger extends HTMLElement {
 			this.hold = this.playback;
 		});
 
-		this.shadow.querySelector('#octhigh').addEventListener('click', () => {
+		this.shadow.querySelector('#octhigh').addEventListener('click', evt => {
+			evt.stopPropagation();
 			this._toggle('#octhigh', c.CLASS_HIDDEN, true);
 			this._toggle('#octlow', c.CLASS_HIDDEN, false);
 		});
-		this.shadow.querySelector('#octlow').addEventListener('click', () => {
+		this.shadow.querySelector('#octlow').addEventListener('click', evt => {
+			evt.stopPropagation();
 			this._toggle('#octhigh', c.CLASS_HIDDEN, false);
 			this._toggle('#octlow', c.CLASS_HIDDEN, true);
 		});
@@ -312,6 +323,7 @@ class Finger extends HTMLElement {
 		}
 
 		if (notes === null) {
+			this._toggle('#synthb', c.CLASS_FADED, true);
 			this[$activeSynthNotes] = null;
 			return this._idleSynths();
 		}
@@ -320,6 +332,43 @@ class Finger extends HTMLElement {
 		if (notesArr[1]) {
 			this[$activeSynthNotes].push(idxToMidi(notesArr[1]));
 		}
+
+		if (notesArr.length === 1) {
+			const relNote = idxToMidi(notesArr[0]) % 12;
+			if (relNote < 6) {
+				this._hide(SYNTH_IDLE_HAND_LEFT);
+				this._hitSynthKey(SYNTH_PLAY_HAND_LEFT, relNote);
+			} else {
+				this._hide(SYNTH_IDLE_HAND_RIGHT);
+				this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, relNote);
+			}
+		}
+	}
+	_hitSynthKey(hand, relNote) {
+		if (!this[$synthKeyX]) {
+			this[$synthKeyX] = [];
+		}
+		if (!this[$synthKeyX][0]) {
+			this[$synthKeyX][0] = this.shadow
+				.querySelector('#bk0')
+				.getAttribute('x1');
+		}
+		if (!this[$synthKeyX][relNote]) {
+			this[$synthKeyX][relNote] = this.shadow
+				.querySelector(`#bk${relNote}`)
+				.getAttribute('x1');
+		}
+
+		this._show(hand);
+
+		const xDiff = this[$synthKeyX][relNote] - this[$synthKeyX][0];
+		this.shadow
+			.querySelector(hand)
+			.style.setProperty('--translate-x', `${xDiff}px`);
+
+		this._toggle([`#bk${relNote}`, hand], c.CLASS_HIT, true);
+
+		this._toggle('#synthb', c.CLASS_FADED, false);
 	}
 	_playDrumNotes(notes) {
 		this._resetPatternUI();
@@ -370,12 +419,12 @@ class Finger extends HTMLElement {
 		const hideLeftHand = !(
 			note0.hands.includes(c.SIDE_LEFT) && note1.hands.includes(c.SIDE_LEFT)
 		);
-		this._toggle(HAND_LEFT, c.CLASS_HIDDEN, hideLeftHand);
+		this._toggle(DRUM_HAND_LEFT, c.CLASS_HIDDEN, hideLeftHand);
 
 		const hideRightHand = !(
 			note0.hands.includes(c.SIDE_RIGHT) && note1.hands.includes(c.SIDE_RIGHT)
 		);
-		this._toggle(HAND_RIGHT, c.CLASS_HIDDEN, hideRightHand);
+		this._toggle(DRUM_HAND_RIGHT, c.CLASS_HIDDEN, hideRightHand);
 
 		const hideCowbell = note0.cowbell === false || note1.cowbell === false;
 		this._toggle(COWBELL, c.CLASS_HIDDEN, hideCowbell);
@@ -466,7 +515,7 @@ class Finger extends HTMLElement {
 		this._show('#druma');
 		this._hide('#drumb');
 
-		this._hide([HAND_LEFT, HAND_RIGHT, FACE(0), FACE(1)]);
+		this._hide([DRUM_HAND_LEFT, DRUM_HAND_RIGHT, FACE(0), FACE(1)]);
 
 		this._toggle(COWBELL, c.CLASS_FADED, !this.playback);
 
@@ -488,9 +537,16 @@ class Finger extends HTMLElement {
 		this._show('#synth');
 
 		this._hide(
-			['#syntha', '#hald', '#hard', '#haru', '#halu', KEY_GUIDE_RIGHT].concat(
-				SYNTH_LEFT
-			)
+			[
+				'#syntha',
+				'#hald',
+				'#hard',
+				'#haru',
+				'#halu',
+				KEY_GUIDE,
+				SYNTH_PLAY_HAND_LEFT,
+				SYNTH_PLAY_HAND_RIGHT
+			].concat(SYNTH_LEFT)
 		);
 		this.shadow.querySelectorAll(SYNTH_BITS_LEFT).forEach(bit => {
 			bit.classList.add(c.CLASS_HIDDEN);
@@ -501,14 +557,21 @@ class Finger extends HTMLElement {
 		}
 
 		this._show('#synthb');
+		this._toggle('#synthb', c.CLASS_FADED, true);
+		this._show([SYNTH_IDLE_HAND_LEFT, SYNTH_IDLE_HAND_RIGHT]);
+
+		for (let k = 0; k < 12; k++) {
+			this._toggle(`#bk${k}`, c.CLASS_HIT, false);
+		}
 	}
 
 	_idleDrums() {
-		this._show([HAND_LEFT, HAND_RIGHT, FACE(0), COWBELL]);
+		this._show([DRUM_HAND_LEFT, DRUM_HAND_RIGHT, FACE(0), COWBELL]);
 	}
 
 	_idleSynths() {
-		this._hide([PLAY_HAND_LEFT, PLAY_HAND_RIGHT]);
+		this._hide([SYNTH_PLAY_HAND_LEFT, SYNTH_PLAY_HAND_RIGHT]);
+		this._show([SYNTH_IDLE_HAND_LEFT, SYNTH_IDLE_HAND_RIGHT]);
 	}
 
 	_initMIDI() {
@@ -598,16 +661,16 @@ class Finger extends HTMLElement {
 	}
 
 	_hide(selector) {
-		asArrayLike(selector).forEach(s => {
-			this._toggle(s, c.CLASS_HIDDEN, true);
-			this._toggle(s, c.CLASS_HIT, false);
-		});
+		this._toggle(selector, c.CLASS_HIDDEN, true);
+		this._toggle(selector, c.CLASS_HIT, false);
 	}
 	_show(selector) {
-		asArrayLike(selector).forEach(s => this._toggle(s, c.CLASS_HIDDEN, false));
+		this._toggle(selector, c.CLASS_HIDDEN, false);
 	}
 	_toggle(selector, className, force) {
-		this.shadow.querySelector(selector).classList.toggle(className, force);
+		asArrayLike(selector).forEach(s => {
+			this.shadow.querySelector(s).classList.toggle(className, force);
+		});
 	}
 }
 

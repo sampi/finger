@@ -50,7 +50,6 @@ export default `
 :host #bd0.hit > line,
 :host #bd1.hit > line{
 	animation-name: kick-hit-line;
-	animation-duration: var(--beat-s);
 }
 
 @keyframes hit {
@@ -91,6 +90,43 @@ export default `
 	}
 	to {
 		stroke-width: 0.8;
+	}
+}
+
+:host #hbld.hit,
+:host #hbrd.hit {
+	animation-name: hand-hit;
+}
+@keyframes hand-hit {
+	from {
+		transform: translate(var(--translate-x), -2.93px);
+	}
+	to {
+		transform: translate(var(--translate-x), 0);
+	}
+}
+
+:host #bk0.hit,
+:host #bk1.hit,
+:host #bk2.hit,
+:host #bk3.hit,
+:host #bk4.hit,
+:host #bk5.hit,
+:host #bk6.hit,
+:host #bk7.hit,
+:host #bk8.hit,
+:host #bk9.hit,
+:host #bk10.hit,
+:host #bk11.hit {
+	animation-name: key-hit;
+}
+
+@keyframes key-hit {
+	from {
+		transform: translateY(0);
+	}
+	to {
+		transform: translateY(2.93px);
 	}
 }
 

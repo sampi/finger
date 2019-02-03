@@ -5,6 +5,8 @@ export const SYNTH_LEFT = [
 ];
 export const SYNTH_BITS_LEFT = '#synth > :nth-child(n+29):nth-child(-n+47)';
 
-export const KEY_GUIDE_RIGHT = '#bkguide';
-export const PLAY_HAND_LEFT = '#hbld';
-export const PLAY_HAND_RIGHT = '#hbrd';
+export const KEY_GUIDE = '#bkguide';
+export const SYNTH_IDLE_HAND_LEFT = '#hblu';
+export const SYNTH_IDLE_HAND_RIGHT = '#hbru';
+export const SYNTH_PLAY_HAND_LEFT = '#hbld';
+export const SYNTH_PLAY_HAND_RIGHT = '#hbrd';

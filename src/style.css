@@ -1,5 +1,6 @@
 :root {
 	--beat-s: 0.25s;
+	--translate-x: 0;
 }
 
 html,
