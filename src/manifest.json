@@ -1,0 +1,112 @@
+{
+	"dir": "ltr",
+	"lang": "en",
+	"name": "Finger",
+	"scope": "/finger/src/index.html",
+	"display": "fullscreen",
+	"start_url": "https://sampi.github.io/finger/src/index.html",
+	"short_name": "Finger",
+	"theme_color": "transparent",
+	"description": "Recreation of the OP-1's Finger sequencer using the Web MIDI API",
+	"orientation": "landscape",
+	"background_color": "#000000",
+	"related_applications": [],
+	"prefer_related_applications": false,
+	"icons": [
+		{
+			"src": "/finger/src/images/71dc9bdb-66fe-464d-7169-39c2eb953f7e.webPlatform.png",
+			"sizes": "44x44",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/5e586002-52f8-e818-7a89-407bc15ade28.webPlatform.png",
+			"sizes": "48x48",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/8f07c0b2-483f-4ad5-91cd-ec883641d39f.webPlatform.png",
+			"sizes": "1240x600",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/0f7a1fc1-7885-6164-8de7-0a985de4d70e.webPlatform.png",
+			"sizes": "300x300",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/239ee165-153b-d2dd-5e53-51f47e4e5a66.webPlatform.png",
+			"sizes": "150x150",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/a682f422-94fe-52ef-5273-e6d50176390c.webPlatform.png",
+			"sizes": "88x88",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/dd77e9a0-933a-f851-d0ee-332e000d9926.webPlatform.png",
+			"sizes": "24x24",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/3bb6de35-b021-716d-b797-465d83e83c72.webPlatform.png",
+			"sizes": "50x50",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/c7257311-05a0-8cb8-ae2b-f6abe4aaf871.webPlatform.png",
+			"sizes": "620x300",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/a031bb5f-49cd-a60e-dadf-3f7327213b25.webPlatform.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/cb11d6ac-ad3f-c0dd-bac4-afa73fc9c820.webPlatform.png",
+			"sizes": "144x144",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/495e85c9-8c83-9601-b56f-c2dec65bf722.webPlatform.png",
+			"sizes": "96x96",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/5ee6f651-067b-bca5-11c6-7e5c22b3e261.webPlatform.png",
+			"sizes": "72x72",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/366ad242-fc42-8e8c-281f-4b07c0a11844.webPlatform.png",
+			"sizes": "36x36",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/125fa37f-b81d-cf05-7df6-443c07c58902.webPlatform.png",
+			"sizes": "1024x1024",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/784884d8-839e-ce66-e671-17b2301b2b53.webPlatform.png",
+			"sizes": "180x180",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/64d1323f-5880-0b0c-1e5c-72e122809d97.webPlatform.png",
+			"sizes": "152x152",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/e505f749-c3aa-b942-5053-3a6f04e369e2.webPlatform.png",
+			"sizes": "120x120",
+			"type": "image/png"
+		},
+		{
+			"src": "/finger/src/images/341d89f2-625a-a1f4-d83d-38327d24b4f4.webPlatform.png",
+			"sizes": "76x76",
+			"type": "image/png"
+		}
+	]
+}
