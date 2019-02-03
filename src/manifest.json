@@ -14,98 +14,13 @@
 	"prefer_related_applications": false,
 	"icons": [
 		{
-			"src": "/finger/src/images/4bca8f12-9f69-92ea-ba4a-31e217f17b71.webPlatform.png",
-			"sizes": "44x44",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/fa2683cc-7486-5adc-619b-187972664daf.webPlatform.png",
-			"sizes": "48x48",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/12b278cb-9443-0d36-1b4f-2d65b5b86570.webPlatform.png",
-			"sizes": "1240x600",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/e1266bd8-75cf-ecad-be19-925058aa2442.webPlatform.png",
-			"sizes": "300x300",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/d996d44b-e36a-48b3-a08d-defc2b0de70c.webPlatform.png",
-			"sizes": "150x150",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/a78972ee-2bf3-ab14-6257-06992bf7e4b2.webPlatform.png",
-			"sizes": "88x88",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/3fc9106c-a134-52a4-6378-e6d14903697d.webPlatform.png",
-			"sizes": "24x24",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/272715e4-787a-34fe-3f60-4fe2151357fa.webPlatform.png",
-			"sizes": "50x50",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/7778bcc3-5d4a-cf30-74d2-c8f12db3880e.webPlatform.png",
-			"sizes": "620x300",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/d0178a94-1458-e39b-b026-a3f981abb306.webPlatform.png",
+			"src": "/finger/src/images/android-chrome-192x192.png",
 			"sizes": "192x192",
 			"type": "image/png"
 		},
 		{
-			"src": "/finger/src/images/c4f71091-d80a-66d0-ae36-452dbf3fd799.webPlatform.png",
-			"sizes": "144x144",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/0d79a2a8-21cf-d9d2-7f47-ef151a37bf87.webPlatform.png",
-			"sizes": "96x96",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/2e6a48c4-0198-b561-a1de-ba0f02f673dd.webPlatform.png",
-			"sizes": "72x72",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/64770d19-393e-01c1-2712-f68a85f7b86e.webPlatform.png",
-			"sizes": "36x36",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/79bff7de-86a3-0a4e-c7d5-dc0d4776539b.webPlatform.png",
-			"sizes": "1024x1024",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/e515e075-edc9-0bb7-1888-760868a96e6b.webPlatform.png",
-			"sizes": "180x180",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/93bf90a0-335c-bd76-2387-aba107342385.webPlatform.png",
-			"sizes": "152x152",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/d312e4f4-af6c-2bad-1275-840258a3c4f5.webPlatform.png",
-			"sizes": "120x120",
-			"type": "image/png"
-		},
-		{
-			"src": "/finger/src/images/455cae81-2670-08ef-2672-0a06d4f52315.webPlatform.png",
-			"sizes": "76x76",
+			"src": "/finger/src/images/android-chrome-512x512.png",
+			"sizes": "512x512",
 			"type": "image/png"
 		}
 	]
