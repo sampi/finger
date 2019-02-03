@@ -107,6 +107,10 @@ class Finger extends HTMLElement {
 		);
 		console.log('');
 		console.log(
+			'Best controlled from an OP-Z or OP-1, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.'
+		);
+		console.log('');
+		console.log(
 			'Changing settings is possible by changing the attributes of the %c<finger-sequencer>%c element:',
 			'color: slate',
 			'color: black'
