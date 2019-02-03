@@ -1,5 +1,9 @@
 const [$midi] = [Symbol('midi')];
 
+/**
+ * Map MIDI notes to pattern indexes
+ * @type {Object}
+ */
 export const whiteKeys = {
 	53: 0,
 	55: 1,
@@ -17,9 +21,20 @@ export const whiteKeys = {
 	76: 13
 };
 
+/**
+ * MIDI mapping of the OP-1 keyboard range
+ * @param  {int} midiNote
+ */
 export const midiToIdx = midiNote => (midiNote ? midiNote - 53 : null);
+/**
+ * Index mapping of the OP-1 keyboard range
+ * @param  {int} midiNote
+ */
 export const idxToMidi = idx => idx + 53;
 
+/**
+ * Handle the Web MIDI API
+ */
 export default class MIDI {
 	constructor() {
 		if (navigator.requestMIDIAccess) {
@@ -27,7 +42,9 @@ export default class MIDI {
 				.requestMIDIAccess()
 				.then(this.success.bind(this), this.failure.bind(this));
 		} else {
-			console.log('Web MIDI API not supported.');
+			alert(
+				"Web MIDI API not supported, I haven't coded computer keyboard controls yet..."
+			);
 		}
 	}
 	success(midi) {
@@ -35,6 +52,7 @@ export default class MIDI {
 
 		for (var input of midi.inputs.values()) {
 			console.log(`MIDI IN: ${input.manufacturer} - ${input.name}`);
+			// Listen to input from every MIDI device
 			input.onmidimessage = this.message.bind(this);
 		}
 
@@ -72,7 +90,6 @@ export default class MIDI {
 		}
 	}
 	send(channel, command, note = 0, velocity = 0) {
-		console.log(`MIDI send ${command} ${note} to ${channel}`);
 		switch (command) {
 			case 'noteoff':
 				command = 0x80;
@@ -82,9 +99,16 @@ export default class MIDI {
 				break;
 		}
 		for (var output of this[$midi].outputs.values()) {
+			// Send to every MIDI device on the appropriate channel
 			output.send([command + (channel - 1), note, velocity]);
 		}
 	}
+	/**
+	 * Called when receiving a noteon message
+	 */
 	noteon(channel, note) {}
+	/**
+	 * Called when receiving a noteof message
+	 */
 	noteoff(channel, note) {}
 }

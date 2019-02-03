@@ -19,44 +19,53 @@ import css from './finger.css.js';
 import * as c from './constants.js';
 import { asArrayLike, stringBool } from './utils.js';
 
-export const [
+// Private symbols to not expose every variable to the outside
+const [
 	$playback,
-	$drumPlayback,
-	$synthPlayback,
 	$hold,
-	$drumPlayhead,
-	$synthPlayhead,
 	$timer,
-	$drumPattern,
-	$synthPattern,
-	$displayPattern,
+	$displayInstrument,
 	$bpm,
 	$stepDuration,
 	$midi,
-	$activeDrumNotes,
-	$activeSynthNotes,
-	$controlChannel,
-	$drumChannel,
-	$synthChannel,
-	$synthKeyX
+	$controlChannel
 ] = [
 	Symbol('playback'),
-	Symbol('drumPlayback'),
-	Symbol('synthPlayback'),
 	Symbol('hold'),
-	Symbol('drumPlayhead'),
-	Symbol('synthPlayhead'),
 	Symbol('timer'),
-	Symbol('drumPattern'),
-	Symbol('synthPattern'),
-	Symbol('displayPattern'),
+	Symbol('displayInstrument'),
 	Symbol('bpm'),
 	Symbol('stepDuration'),
 	Symbol('midi'),
+	Symbol('controlChannel')
+];
+
+const [
+	$drumPlayback,
+	$drumPlayhead,
+	$drumPattern,
+	$activeDrumNotes,
+	$drumChannel
+] = [
+	Symbol('drumPlayback'),
+	Symbol('drumPlayhead'),
+	Symbol('drumPattern'),
 	Symbol('activeDrumNotes'),
+	Symbol('drumChannel')
+];
+
+const [
+	$synthPlayback,
+	$synthPlayhead,
+	$synthPattern,
+	$activeSynthNotes,
+	$synthChannel,
+	$synthKeyX
+] = [
+	Symbol('synthPlayback'),
+	Symbol('synthPlayhead'),
+	Symbol('synthPattern'),
 	Symbol('activeSynthNotes'),
-	Symbol('controlChannel'),
-	Symbol('drumChannel'),
 	Symbol('synthChannel'),
 	Symbol('synthKeyX')
 ];
@@ -76,6 +85,7 @@ class Finger extends HTMLElement {
 	constructor() {
 		super();
 
+		// Set some defaults
 		this[$playback] = false;
 		this[$drumPlayback] = false;
 		this[$synthPlayback] = false;
@@ -85,12 +95,13 @@ class Finger extends HTMLElement {
 		this[$controlChannel] = 16;
 		this[$drumChannel] = 1;
 		this[$synthChannel] = 2;
-		this[$displayPattern] = 'drum';
+		this[$displayInstrument] = 'drum';
 
+		// Look for MIDI devices
 		this._initMIDI();
 
+		// Show the SVG
 		this.shadow = this.attachShadow({ mode: 'open' });
-
 		this.shadow.innerHTML = `
 			<style>
 				${css}
@@ -101,7 +112,9 @@ class Finger extends HTMLElement {
 		);
 	}
 
+	// We're in the DOM
 	connectedCallback() {
+		// Reset the UI
 		this._resetUI();
 
 		this._resetDrums();
@@ -110,56 +123,66 @@ class Finger extends HTMLElement {
 		this._resetSynths();
 		this._idleSynths();
 
-		this.addEventListener('click', () => {
-			this.playback = !this.playback;
-			this.hold = this.playback;
-		});
+		// Allow use of the UI without MIDI keyboards (too buggy right now)
+		// this.addEventListener('click', () => {
+		// 	this.playback = !this.playback;
+		// 	this.hold = this.playback;
+		// });
 
-		this.shadow.querySelector('#octhigh').addEventListener('click', evt => {
-			evt.stopPropagation();
-			this._toggle('#octhigh', c.CLASS_HIDDEN, true);
-			this._toggle('#octlow', c.CLASS_HIDDEN, false);
-		});
-		this.shadow.querySelector('#octlow').addEventListener('click', evt => {
-			evt.stopPropagation();
-			this._toggle('#octhigh', c.CLASS_HIDDEN, false);
-			this._toggle('#octlow', c.CLASS_HIDDEN, true);
-		});
+		// this.shadow.querySelector('#octhigh').addEventListener('click', evt => {
+		// 	evt.stopPropagation();
+		// 	this._toggle('#octhigh', c.CLASS_HIDDEN, true);
+		// 	this._toggle('#octlow', c.CLASS_HIDDEN, false);
+		// });
+		// this.shadow.querySelector('#octlow').addEventListener('click', evt => {
+		// 	evt.stopPropagation();
+		// 	this._toggle('#octhigh', c.CLASS_HIDDEN, false);
+		// 	this._toggle('#octlow', c.CLASS_HIDDEN, true);
+		// });
 
-		for (let k = 0; k < 7; k++) {
-			this.shadow.querySelector(`#p${k}`).addEventListener('click', evt => {
-				evt.stopPropagation();
-				if (
-					this.shadow
-						.querySelector('#octhigh')
-						.classList.contains(c.CLASS_HIDDEN)
-				) {
-					this.drumPattern = k;
-					this[$drumPlayback] = true;
-				} else {
-					this.synthPattern = k;
-					this[$synthPlayback] = true;
-				}
-			});
-		}
+		// for (let k = 0; k < 7; k++) {
+		// 	this.shadow.querySelector(`#p${k}`).addEventListener('click', evt => {
+		// 		evt.stopPropagation();
+		// 		if (
+		// 			this.shadow
+		// 				.querySelector('#octhigh')
+		// 				.classList.contains(c.CLASS_HIDDEN)
+		// 		) {
+		// 			this.drumPattern = k;
+		// 			this[$drumPlayback] = true;
+		// 		} else {
+		// 			this.synthPattern = k;
+		// 			this[$synthPlayback] = true;
+		// 		}
+		// 	});
+		// }
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
+		// Replace `something-name` with `somethingName`
 		name = name.replace(/-([a-z])/g, function(g) {
 			return g[1].toUpperCase();
 		});
 		this[name] = newVal;
 	}
 
+	/**
+	 * Start or stop playback
+	 * @param  {boolean} playback
+	 */
 	set playback(playback) {
 		playback = stringBool(playback);
 		if (this[$playback] !== playback) {
+			// Reset all playheads and start playback
+			// (won't do anything unless there's a pattern started on drums or synth)
 			if (playback) {
 				this[$drumPlayhead] = 0;
 				this[$synthPlayhead] = 0;
 				this[$timer] = null;
+				// Start the main loop
 				requestAnimationFrame(this._playBeat.bind(this));
 			} else {
+				// Send noteoff to all held notes when stopping playback
 				if (this[$activeDrumNotes] !== null) {
 					this[$activeDrumNotes].forEach(n =>
 						this[$midi].send(this[$drumChannel], 'noteoff', n, 127)
@@ -179,45 +202,59 @@ class Finger extends HTMLElement {
 		return this[$playback];
 	}
 
-	set hold(hold) {
-		hold = stringBool(hold);
-		if (this[$hold] !== hold) {
-			this._toggle('#hold', c.CLASS_FADED, !hold);
-			this[$hold] = hold;
-			this.setAttribute('hold', hold);
-			if (!hold) {
-				this.playback = false;
-			}
-		}
-	}
-	get hold() {
-		return this[$hold];
-	}
+	// set hold(hold) {
+	// 	hold = stringBool(hold);
+	// 	if (this[$hold] !== hold) {
+	// 		this._toggle('#hold', c.CLASS_FADED, !hold);
+	// 		this[$hold] = hold;
+	// 		this.setAttribute('hold', hold);
+	// 		if (!hold) {
+	// 			this.playback = false;
+	// 		}
+	// 	}
+	// }
+	// get hold() {
+	// 	return this[$hold];
+	// }
 
+	/**
+	 * Set the current drum pattern
+	 * @param  {int|string} drumPattern
+	 */
 	set drumPattern(drumPattern) {
 		if (this[$drumPattern] !== parseInt(drumPattern, 10)) {
 			this[$drumPattern] = parseInt(drumPattern, 10);
 			this.setAttribute('drum-pattern', drumPattern);
-			this[$displayPattern] = 'drum';
-			this._resetPatternUI();
+			// Make the drums show up in the middle pattern view
+			this[$displayInstrument] = 'drum';
+			this._updatePatternUI();
 		}
 	}
 	get drumPattern() {
 		return this[$drumPattern];
 	}
 
+	/**
+	 * Set the current synth pattern
+	 * @param  {int|string} synthPattern
+	 */
 	set synthPattern(synthPattern) {
 		if (this[$synthPattern] !== parseInt(synthPattern, 10)) {
 			this[$synthPattern] = parseInt(synthPattern, 10);
 			this.setAttribute('synth-pattern', synthPattern);
-			this[$displayPattern] = 'synth';
-			this._resetPatternUI();
+			// Make the synth show up in the middle pattern view
+			this[$displayInstrument] = 'synth';
+			this._updatePatternUI();
 		}
 	}
 	get synthPattern() {
 		return this[$synthPattern];
 	}
 
+	/**
+	 * Set the BPM
+	 * @param  {int|string} bpm
+	 */
 	set bpm(bpm) {
 		if (Math.abs(parseFloat(this[$bpm]) - parseFloat(bpm)) > Number.EPSILON) {
 			this[$bpm] = parseFloat(bpm);
@@ -230,6 +267,10 @@ class Finger extends HTMLElement {
 		return this[$bpm];
 	}
 
+	/**
+	 * Set the channel of the control input
+	 * @param  {int|string} controlChannel
+	 */
 	set controlChannel(controlChannel) {
 		if (this[$controlChannel] !== parseInt(controlChannel, 10)) {
 			this[$controlChannel] = parseInt(controlChannel, 10);
@@ -240,6 +281,10 @@ class Finger extends HTMLElement {
 		return this[$controlChannel];
 	}
 
+	/**
+	 * Set the channel of the drum output
+	 * @param  {int|string} drumChannel
+	 */
 	set drumChannel(drumChannel) {
 		if (this[$drumChannel] !== parseInt(drumChannel, 10)) {
 			this[$drumChannel] = parseInt(drumChannel, 10);
@@ -250,6 +295,10 @@ class Finger extends HTMLElement {
 		return this[$drumChannel];
 	}
 
+	/**
+	 * Set the channel of the synth output
+	 * @param  {int|string} synthChannel
+	 */
 	set synthChannel(synthChannel) {
 		if (this[$synthChannel] !== parseInt(synthChannel, 10)) {
 			this[$synthChannel] = parseInt(synthChannel, 10);
@@ -260,6 +309,10 @@ class Finger extends HTMLElement {
 		return this[$synthChannel];
 	}
 
+	/**
+	 * The main loop to play the patterns
+	 * @param  {DOMHighResTimeStamp} timestamp Passed by requestAnimationFrame()
+	 */
 	_playBeat(timestamp) {
 		let drumPattern = drumPatterns[this[$drumPattern]];
 		let synthPattern = synthPatterns[this[$synthPattern]];
@@ -267,16 +320,23 @@ class Finger extends HTMLElement {
 		if (!this[$timer]) {
 			this[$timer] = timestamp;
 
+			// Time to play a note, because the timer has been reset
 			if (this[$drumPlayback]) {
 				this._playDrumNotes(
 					drumPattern[this[$drumPlayhead] % drumPattern.length]
 				);
+			} else {
+				this._resetDrums();
+				this._idleDrums();
 			}
 
 			if (this[$synthPlayback]) {
 				this._playSynthNotes(
 					synthPattern[this[$synthPlayhead] % synthPattern.length]
 				);
+			} else {
+				this._resetSynths();
+				this._idleSynths();
 			}
 		}
 
@@ -286,14 +346,17 @@ class Finger extends HTMLElement {
 		const twoframes = (1000 / 60) * 2;
 		const progress = timestamp - this[$timer] + twoframes;
 		if (progress >= this[$stepDuration] * 1000.0) {
+			// Whenever it's time to play a note, we will reset the timer
 			this[$timer] = null;
 
 			this[$drumPlayhead] = ++this[$drumPlayhead] % drumPattern.length;
 			this[$synthPlayhead] = ++this[$synthPlayhead] % synthPattern.length;
 		}
 		if (this[$playback]) {
+			// Continue playback
 			requestAnimationFrame(this._playBeat.bind(this));
 		} else {
+			// Reset the UI if we're not playing
 			this._resetDrums();
 			this._idleDrums();
 
@@ -301,14 +364,21 @@ class Finger extends HTMLElement {
 			this._idleSynths();
 		}
 	}
+
+	/**
+	 * Read notes to play for the synth and show them in the UI
+	 * @param  {int|Array} notes
+	 */
 	_playSynthNotes(notes) {
-		this._resetPatternUI();
+		// Reset the synth UI
+		this._updatePatternUI();
 		this._resetSynths();
 
 		const notesArr = asArrayLike(notes);
 
 		const midi = this[$midi];
 
+		// Stop playing the previous notes
 		if (this[$activeSynthNotes] !== null) {
 			midi.send(
 				this[$synthChannel],
@@ -326,25 +396,26 @@ class Finger extends HTMLElement {
 			}
 		}
 
+		// Send new notes to MIDI out
 		if (notes !== null) {
 			midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[0]), 127);
 			if (notesArr[1]) {
 				midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[1]), 127);
 			}
-		}
-
-		if (notes === null) {
-			this._toggle('#synthb', c.CLASS_FADED, true);
+		} else {
+			// Stay idle if no notes should be played
 			this[$activeSynthNotes] = null;
 			return this._idleSynths();
 		}
 
+		// Store played notes, so we can stop them the next time anything is played
 		this[$activeSynthNotes] = [idxToMidi(notesArr[0])];
 		if (notesArr[1]) {
 			this[$activeSynthNotes].push(idxToMidi(notesArr[1]));
 		}
 
 		if (notesArr.length === 1) {
+			// Play single notes with the appropriate hand
 			const relNote = idxToMidi(notesArr[0]) % 12;
 			if (relNote < 6) {
 				this._hide(SYNTH_IDLE_HAND_LEFT);
@@ -354,6 +425,7 @@ class Finger extends HTMLElement {
 				this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, relNote);
 			}
 		} else {
+			// Play multiple notes with two hands
 			this._hide([SYNTH_IDLE_HAND_LEFT, SYNTH_IDLE_HAND_RIGHT]);
 			const relNotesArr = [
 				idxToMidi(notesArr[0]) % 12,
@@ -363,7 +435,14 @@ class Finger extends HTMLElement {
 			this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, Math.max(...relNotesArr));
 		}
 	}
+
+	/**
+	 * Animate hitting a key with a hand
+	 * @param  {string} hand DOM selector
+	 * @param  {int} relNote Relative note position
+	 */
 	_hitSynthKey(hand, relNote) {
+		// Memoize the key positions to improve performance
 		if (!this[$synthKeyX]) {
 			this[$synthKeyX] = [];
 		}
@@ -380,24 +459,33 @@ class Finger extends HTMLElement {
 
 		this._show(hand);
 
+		// Calculate the x-offset of the hand and set it in a CSS custom property
+		// (it will be used in the CSS keyframe animation)
 		const xDiff = this[$synthKeyX][relNote] - this[$synthKeyX][0];
 		this.shadow
 			.querySelector(hand)
 			.style.setProperty('--translate-x', `${xDiff}px`);
 
+		// Animate the hand and the key using CSS
 		this._toggle([`#bk${relNote}`, hand], c.CLASS_HIT, true);
 
 		this._toggle('#synthb', c.CLASS_FADED, false);
 	}
 
+	/**
+	 * Read notes for the drums to play and show them in the UI
+	 * @param  {int|Array} notes
+	 */
 	_playDrumNotes(notes) {
-		this._resetPatternUI();
+		// Reset the drums UI
+		this._updatePatternUI();
 		this._resetDrums();
 
 		const notesArr = asArrayLike(notes);
 
 		const midi = this[$midi];
 
+		// Stop playing the previous notes
 		if (this[$activeDrumNotes] !== null) {
 			midi.send(this[$drumChannel], 'noteoff', this[$activeDrumNotes][0], 127);
 			if (this[$activeDrumNotes][1]) {
@@ -410,6 +498,7 @@ class Finger extends HTMLElement {
 			}
 		}
 
+		// Send new notes to MIDI out
 		if (notes !== null) {
 			midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[0]), 127);
 			if (notesArr[1]) {
@@ -418,15 +507,18 @@ class Finger extends HTMLElement {
 		}
 
 		if (notes === null) {
+			// Stay idle if no notes should be played
 			this[$activeDrumNotes] = null;
 			return this._idleDrums();
 		}
 
+		// Store played notes, so we can stop them the next time anything is played
 		this[$activeDrumNotes] = [idxToMidi(notesArr[0])];
 		if (notesArr[1]) {
 			this[$activeDrumNotes].push(idxToMidi(notesArr[1]));
 		}
 
+		// Show the appropriate state in the UI
 		const note0 = drum[notesArr[0] % drum.length];
 		const note1 = drum[notesArr[1] % drum.length] || note0;
 
@@ -449,6 +541,8 @@ class Finger extends HTMLElement {
 		const hideCowbell = note0.cowbell === false || note1.cowbell === false;
 		this._toggle(COWBELL, c.CLASS_HIDDEN, hideCowbell);
 
+		// When two notes are played, only show both
+		// if the gorilla can pull it off
 		if (
 			note0.hands === 'lr' ||
 			note1.hands === 'lr' ||
@@ -460,6 +554,9 @@ class Finger extends HTMLElement {
 		}
 	}
 
+	/**
+	 * Reset shared parts of the UI
+	 */
 	_resetUI() {
 		this._hide([
 			'#replace',
@@ -473,20 +570,29 @@ class Finger extends HTMLElement {
 		this.hold = false;
 	}
 
+	/**
+	 * Reset the piano keys UI
+	 */
 	_resetKeysUI() {
 		for (let key = 0; key < 7; key++) {
 			this._toggle(`#p${key}`, c.CLASS_ACTIVE, false);
 		}
 	}
 
-	_resetPatternUI() {
+	/**
+	 * Update the pattern view UI, show currently displayed pattern
+	 */
+	_updatePatternUI() {
 		let pattern;
+		let patternIdx;
 		let step = 0;
-		if (this[$displayPattern] === 'drum') {
-			pattern = drumPatterns[this[$drumPattern]];
+		if (this[$displayInstrument] === 'drum') {
+			patternIdx = this[$drumPattern];
+			pattern = drumPatterns[patternIdx];
 			step = this[$drumPlayhead] || 0;
 		} else {
-			pattern = synthPatterns[this[$synthPattern]];
+			patternIdx = this[$synthPattern];
+			pattern = synthPatterns[patternIdx];
 			step = this[$synthPlayhead] || 0;
 		}
 		if (this.playback) {
@@ -519,16 +625,20 @@ class Finger extends HTMLElement {
 		this._show(`#g${step}${step >= 22 && step <= 29 ? '_1_' : ''}`);
 
 		this._resetKeysUI();
-		this._toggle(`#p${this.drumPattern % 7}`, c.CLASS_ACTIVE, true);
+		this._toggle(`#p${patternIdx % 7}`, c.CLASS_ACTIVE, true);
 
 		this._hide(['#octhigh', '#octlow']);
-		if (this.drumPattern >= 7) {
+		if (patternIdx >= 7) {
 			this._show('#octhigh');
 		} else {
 			this._show('#octlow');
 		}
 	}
 
+	/**
+	 * Hide unused parts of the drum UI
+	 * @return {[type]} [description]
+	 */
 	_resetDrums() {
 		this._show('#drum');
 
@@ -551,6 +661,14 @@ class Finger extends HTMLElement {
 
 			this._hide(`#ad${i}`);
 		}
+	}
+
+	/**
+	 * Set the drum gorilla to stay idle
+	 */
+	_idleDrums() {
+		this._show([DRUM_HAND_LEFT, DRUM_HAND_RIGHT, FACE(0), COWBELL]);
+		this._toggle(COWBELL, c.CLASS_FADED, !this[$drumPlayback]);
 	}
 
 	_resetSynths() {
@@ -585,58 +703,83 @@ class Finger extends HTMLElement {
 		}
 	}
 
-	_idleDrums() {
-		this._show([DRUM_HAND_LEFT, DRUM_HAND_RIGHT, FACE(0), COWBELL]);
-	}
-
+	/**
+	 * Set the synth dude to idle
+	 */
 	_idleSynths() {
 		this._hide([SYNTH_PLAY_HAND_LEFT, SYNTH_PLAY_HAND_RIGHT]);
 		this._show([SYNTH_IDLE_HAND_LEFT, SYNTH_IDLE_HAND_RIGHT]);
+		this._toggle('#synthb', c.CLASS_FADED, !this[$synthPlayback]);
 	}
 
+	/**
+	 * Connect to all possible MIDI devices and set up message listeners
+	 */
 	_initMIDI() {
 		let drumPatterns = [];
 		let synthPatterns = [];
 
 		this[$midi] = new MIDI();
+		/**
+		 * Handle incoming MIDI note presses
+		 * @param  {int} channel
+		 * @param  {int} note
+		 */
 		this[$midi].noteon = (channel, note) => {
+			// Only handle input on the control channel
 			if (channel !== this[$controlChannel]) {
 				return;
 			}
 
+			// Only handle input of the middle white keys F-E (OP-1/Z style)
 			const patternIdx = whiteKeys[note];
 			if (patternIdx === undefined) {
 				return;
 			}
 
 			if (patternIdx < 7) {
+				// Left side is for drums
+				// Start playback and show pattern
 				if (!this[$drumPlayback]) {
 					this[$drumPlayhead] = 0;
 				}
+				this[$displayInstrument] = 'drum';
 				this[$drumPlayback] = true;
 				this.drumPattern = patternIdx;
 				drumPatterns.push(this.drumPattern);
 			} else {
+				// Right side is for synths
+				// Start playback and show pattern
 				if (!this[$synthPlayback]) {
 					this[$synthPlayhead] = 0;
 				}
+				this[$displayInstrument] = 'synth';
 				this[$synthPlayback] = true;
 				this.synthPattern = patternIdx;
 				synthPatterns.push(this.synthPattern);
 			}
 
+			// Whatever input we get, playback should be started
 			this.playback = true;
 		};
+		/**
+		 * Handle incoming MIDI note releases
+		 * @param  {int} channel
+		 * @param  {int} note
+		 */
 		this[$midi].noteoff = (channel, note) => {
+			// Only handle input on the control channel
 			if (channel !== this[$controlChannel]) {
 				return;
 			}
 
+			// Only handle input of the middle white keys F-E (OP-1/Z style)
 			const patternIdx = whiteKeys[note];
 			if (patternIdx === undefined) {
 				return;
 			}
-			this.playback = true;
+
+			// When the HOLD feature is enabled, playback shouldn't stop when the keys are released (super buggy right now)
 			// if (this.hold) {
 			// 	if (patternIdx < 7) {
 			// 		drumPatterns = [patternIdx];
@@ -649,6 +792,9 @@ class Finger extends HTMLElement {
 			// }
 
 			if (patternIdx < 7) {
+				// Left side is for drums
+				// Either jump back to another pattern still being held down,
+				// or stop playback of drums
 				const idx = drumPatterns.lastIndexOf(patternIdx);
 				if (idx !== -1) {
 					drumPatterns.splice(idx, 1);
@@ -656,10 +802,15 @@ class Finger extends HTMLElement {
 
 				if (drumPatterns.length === 0) {
 					if (synthPatterns.length === 0) {
+						// If there would be no drums and synths played, we stop playback
 						this.playback = false;
+					} else {
+						// If there are still synths playing, we show that pattern
+						this[$displayInstrument] = 'synth';
 					}
 					this[$drumPlayback] = false;
 				} else {
+					// There is another drum key held down, so we'll start playing that
 					this.drumPattern = drumPatterns[drumPatterns.length - 1];
 				}
 			} else {
@@ -670,23 +821,40 @@ class Finger extends HTMLElement {
 
 				if (synthPatterns.length === 0) {
 					if (drumPatterns.length === 0) {
+						// If there would be no drums and synths played, we stop playback
 						this.playback = false;
+					} else {
+						// If there are still drums playing, we show that pattern
+						this[$displayInstrument] = 'drum';
 					}
 					this[$synthPlayback] = false;
 				} else {
+					// There is another synth key held down, so we'll start playing that
 					this.synthPattern = synthPatterns[synthPatterns.length - 1];
 				}
 			}
 		};
 	}
 
+	/**
+	 * Hide element
+	 * @param  {string|Array} selector
+	 */
 	_hide(selector) {
 		this._toggle(selector, c.CLASS_HIDDEN, true);
 		this._toggle(selector, c.CLASS_HIT, false);
 	}
+	/**
+	 * Show element
+	 * @param  {string|Array} selector
+	 */
 	_show(selector) {
 		this._toggle(selector, c.CLASS_HIDDEN, false);
 	}
+	/**
+	 * classList.toggle shorthand
+	 * @param  {string|Array} selector
+	 */
 	_toggle(selector, className, force) {
 		asArrayLike(selector).forEach(s => {
 			this.shadow.querySelector(s).classList.toggle(className, force);

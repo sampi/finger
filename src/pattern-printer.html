@@ -1,0 +1,40 @@
+<!-- This can be used to print out the preset patterns of the Finger sequencer on the OP-1 -->
+<script>
+	navigator.requestMIDIAccess().then(onMIDISuccess, () => console.log('failure'));
+
+function onMIDISuccess(midiAccess) {
+	for (var input of midiAccess.inputs.values()) {
+		input.onmidimessage = getMIDIMessage;
+	}
+}
+
+window.notes = '[[';
+let prevTime = performance.now();
+function getMIDIMessage(message) {
+	var command = message.data[0];
+	var note = message.data[1];
+	var velocity = message.data.length > 2 ? message.data[2] : 0;
+
+	switch (command) {
+		case 144: // noteOn
+			let delay = Math.round((performance.now() - prevTime) / 250.0);
+			prevTime = performance.now();
+			if (window.notes === '[[') {
+				delay = -1;
+			}
+
+			if (delay === 0) {
+				window.notes += ', ';
+			} else if (delay === 1) {
+				window.notes += '], [';
+			} else if (delay > 1) {
+				window.notes += ']' + ', null'.repeat(delay - 1) + ', [';
+			}
+
+			if (velocity > 0) {
+				window.notes += `n(${note})`;
+				console.log(window.notes);
+			}
+			break;
+	}
+}</script>

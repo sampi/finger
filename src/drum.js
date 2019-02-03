@@ -1,5 +1,8 @@
 import * as c from './constants.js';
 
+/**
+ * Mappings of the gorilla's states for each key
+ */
 export default [
 	// 0 F kick:
 	{ face: 5, hands: 'lr', layer: '#ad0' },
@@ -54,19 +57,6 @@ export default [
 	{ face: 3, cowbell: false, hands: 'r', layer: '#ad10_1_' },
 	// 11 E '10':
 	{ face: 4, hands: '', layer: '#ad11' }
-	// 12 F '11': '',
-	// 13 F# ride: '',
-	// 14 G '12': '',
-	// 15 G# crash: '',
-	// 16 A '13': '',
-	// 17 A# '?': '',
-	// 18 B '14': '',
-	// 19 C 'bass-1': '',
-
-	// 20 C# 'bass-2': '',
-	// 21 D 'bass-3': '',
-	// 22 D# 'bass-4': '',
-	// 23 E 'bass-5': ''
 ];
 
 export const DRUM_HAND_LEFT = '#ahand_x5F_left';

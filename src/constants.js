@@ -3,8 +3,5 @@ export const CLASS_HIT = 'hit';
 export const CLASS_FADED = 'faded';
 export const CLASS_ACTIVE = 'active';
 
-export const SIDE_A = 'a';
-export const SIDE_B = 'b';
-
 export const SIDE_LEFT = 'l';
 export const SIDE_RIGHT = 'r';

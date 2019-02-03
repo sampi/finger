@@ -3,10 +3,10 @@
  * and webpack/rollup would take care of importing it.
  */
 export default `
-
+/*
 :host {
 	cursor: pointer;
-}
+} */
 
 :host > svg {
 	width: 100%;
@@ -18,6 +18,7 @@ export default `
 :host .faded {
 	opacity: 0.2;
 }
+
 :host #keys > g {
 	pointer-events: bounding-box;
 }
@@ -28,30 +29,12 @@ export default `
 	stroke: #DFD9FF !important;
 	stroke-linecap: square !important;
 }
-
+/* Hit animation */
 :host .hit {
 	animation-name: hit;
 	animation-duration: var(--beat-s);
 	animation-iteration-count: infinite;
 }
-
-:host #ad0.hit,
-:host #ad1.hit,
-:host #bd0.hit,
-:host #bd1.hit {
-	transform-box: fill-box;
-	transform-origin: center;
-	animation-name: kick-hit;
-	transform: scale(1);
-	opacity: 0;
-}
-:host #ad0.hit > line,
-:host #ad1.hit > line,
-:host #bd0.hit > line,
-:host #bd1.hit > line{
-	animation-name: kick-hit-line;
-}
-
 @keyframes hit {
 	from {
 		transform: translateY(3px);
@@ -64,6 +47,17 @@ export default `
 	}
 }
 
+/* Kick-drum hit animation */
+:host #ad0.hit,
+:host #ad1.hit,
+:host #bd0.hit,
+:host #bd1.hit {
+	transform-box: fill-box;
+	transform-origin: center;
+	animation-name: kick-hit;
+	transform: scale(1);
+	opacity: 0;
+}
 @keyframes kick-hit {
 	from {
 		transform: scale(0.8);
@@ -81,6 +75,12 @@ export default `
 		opacity:  0;
 	}
 }
+:host #ad0.hit > line,
+:host #ad1.hit > line,
+:host #bd0.hit > line,
+:host #bd1.hit > line{
+	animation-name: kick-hit-line;
+}
 @keyframes kick-hit-line {
 	from {
 		stroke-width: 1.5;
@@ -93,6 +93,7 @@ export default `
 	}
 }
 
+/* Synth hand animation */
 :host #hbld.hit,
 :host #hbrd.hit {
 	animation-name: hand-hit;
@@ -106,6 +107,7 @@ export default `
 	}
 }
 
+/* Synth key animation */
 :host #bk0.hit,
 :host #bk1.hit,
 :host #bk2.hit,
@@ -120,7 +122,6 @@ export default `
 :host #bk11.hit {
 	animation-name: key-hit;
 }
-
 @keyframes key-hit {
 	from {
 		transform: translateY(0);
