@@ -624,7 +624,7 @@ class Finger extends HTMLElement {
 			'#octdown',
 			'#octup'
 		]);
-		this.hold = false;
+		this._toggle('#hold', c.CLASS_FADED, true);
 	}
 
 	/**
@@ -858,6 +858,12 @@ class Finger extends HTMLElement {
 				}
 
 				if (drumPatterns.length === 0) {
+					// Send noteoff to all held notes when stopping playback
+					if (this[$activeDrumNotes] !== null) {
+						this[$activeDrumNotes].forEach(n =>
+							this[$midi].send(this[$drumChannel], 'noteoff', n, 127)
+						);
+					}
 					if (synthPatterns.length === 0) {
 						// If there would be no drums and synths played, we stop playback
 						this.playback = false;
@@ -877,6 +883,12 @@ class Finger extends HTMLElement {
 				}
 
 				if (synthPatterns.length === 0) {
+					if (this[$activeSynthNotes] !== null) {
+						// Send noteoff to all held notes when stopping playback
+						this[$activeSynthNotes].forEach(n =>
+							this[$midi].send(this[$synthChannel], 'noteoff', n, 127)
+						);
+					}
 					if (drumPatterns.length === 0) {
 						// If there would be no drums and synths played, we stop playback
 						this.playback = false;
