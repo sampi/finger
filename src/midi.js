@@ -51,13 +51,17 @@ export default class MIDI {
 		this[$midi] = midi;
 
 		for (var input of midi.inputs.values()) {
-			console.log(`MIDI IN: ${input.manufacturer} - ${input.name}`);
+			console.log(
+				`MIDI IN device connected: ${input.manufacturer} - ${input.name}`
+			);
 			// Listen to input from every MIDI device
 			input.onmidimessage = this.message.bind(this);
 		}
 
 		for (var output of midi.outputs.values()) {
-			console.log(`MIDI OUT: ${input.manufacturer} - ${input.name}`);
+			console.log(
+				`MIDI OUT device connected: ${input.manufacturer} - ${input.name}`
+			);
 		}
 	}
 	failure() {

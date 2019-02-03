@@ -85,6 +85,63 @@ class Finger extends HTMLElement {
 	constructor() {
 		super();
 
+		console.log(
+			'%cWelcome to the OP-1 Finger Sequencer simulator',
+			'font-size: 18px;'
+		);
+		console.log('');
+		console.log(
+			'%cYou can control the sequencer by connecting one or more MIDI devices to your computer.',
+			''
+		);
+		console.log(
+			'Input will be taken from every connected MIDI device on the control channel %c(default: MIDI channel 16),',
+			'color: gray'
+		);
+		console.log(
+			'Output will be sent to two separate channels for drums %c(default: MIDI channel 1)%c and synths %c(default: MIDI channel 8)%c.',
+			'color: gray',
+			'color: black',
+			'color: gray',
+			'color: black'
+		);
+		console.log('');
+		console.log(
+			'Changing settings is possible by changing the attributes of the %c<finger-sequencer>%c element:',
+			'color: slate',
+			'color: black'
+		);
+		console.log(
+			"* To set the Control MIDI input channel: %cdocument.querySelector('finger-sequencer').setAttribute('control-channel', 16);",
+			'color: gray'
+		);
+		console.log(
+			"* To set the Drum MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
+			'color: gray'
+		);
+		console.log(
+			"* To set the Synth MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 8);",
+			'color: gray'
+		);
+		console.log(
+			"* To set the BPM: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
+			'color: gray'
+		);
+		console.log('');
+		console.log('Have fun playing!');
+		console.log('');
+		console.log(
+			'%cMade by: %cDaniel Spitzer <github.com/sampi>',
+			'color: grey',
+			'color: slate'
+		);
+		console.log('');
+		console.log(
+			'%cCopyright notice: All of the visual artwork was made by Teenage Engineering, I am just using it for fun here.',
+			'color: gray; font-size: 8px'
+		);
+		console.log('');
+
 		// Set some defaults
 		this[$playback] = false;
 		this[$drumPlayback] = false;
