@@ -71,7 +71,7 @@ export default class MIDI {
 				break;
 		}
 	}
-	send(channel, command, note, velocity) {
+	send(channel, command, note = 0, velocity = 0) {
 		console.log(`MIDI send ${command} ${note} to ${channel}`);
 		switch (command) {
 			case 'noteoff':

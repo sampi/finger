@@ -159,6 +159,17 @@ class Finger extends HTMLElement {
 				this[$synthPlayhead] = 0;
 				this[$timer] = null;
 				requestAnimationFrame(this._playBeat.bind(this));
+			} else {
+				if (this[$activeDrumNotes] !== null) {
+					this[$activeDrumNotes].forEach(n =>
+						this[$midi].send(this[$drumChannel], 'noteoff', n, 127)
+					);
+				}
+				if (this[$activeSynthNotes] !== null) {
+					this[$activeSynthNotes].forEach(n =>
+						this[$midi].send(this[$synthChannel], 'noteoff', n, 127)
+					);
+				}
 			}
 			this[$playback] = playback;
 			this.setAttribute('playback', playback);
@@ -342,6 +353,14 @@ class Finger extends HTMLElement {
 				this._hide(SYNTH_IDLE_HAND_RIGHT);
 				this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, relNote);
 			}
+		} else {
+			this._hide([SYNTH_IDLE_HAND_LEFT, SYNTH_IDLE_HAND_RIGHT]);
+			const relNotesArr = [
+				idxToMidi(notesArr[0]) % 12,
+				idxToMidi(notesArr[1]) % 12
+			];
+			this._hitSynthKey(SYNTH_PLAY_HAND_LEFT, Math.min(...relNotesArr));
+			this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, Math.max(...relNotesArr));
 		}
 	}
 	_hitSynthKey(hand, relNote) {
@@ -370,6 +389,7 @@ class Finger extends HTMLElement {
 
 		this._toggle('#synthb', c.CLASS_FADED, false);
 	}
+
 	_playDrumNotes(notes) {
 		this._resetPatternUI();
 		this._resetDrums();
