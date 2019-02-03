@@ -6,7 +6,7 @@
 	"display": "fullscreen",
 	"start_url": "https://sampi.github.io/finger/src/index.html",
 	"short_name": "Finger",
-	"theme_color": "transparent",
+	"theme_color": "#000000",
 	"description": "Recreation of the OP-1's Finger sequencer using the Web MIDI API",
 	"orientation": "landscape",
 	"background_color": "#000000",
