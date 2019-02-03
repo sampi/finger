@@ -76,7 +76,6 @@ export default class MIDI {
 		switch (command) {
 			// note on
 			case 0x90:
-				console.log(event);
 				if (velocity !== 0 && whiteKeys[note] !== undefined) {
 					this.noteon(channel, note);
 				} else if (!velocity) {
