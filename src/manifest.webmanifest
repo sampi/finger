@@ -2,9 +2,8 @@
 	"dir": "ltr",
 	"lang": "en",
 	"name": "Finger",
-	"scope": "/finger/src/index.html",
 	"display": "fullscreen",
-	"start_url": "https://sampi.github.io/finger/src/index.html",
+	"start_url": "https://finger.sampi.io/",
 	"short_name": "Finger",
 	"theme_color": "#000000",
 	"description": "Recreation of the OP-1's Finger sequencer using the Web MIDI API",
@@ -14,12 +13,12 @@
 	"prefer_related_applications": false,
 	"icons": [
 		{
-			"src": "/finger/src/images/android-chrome-192x192.png",
+			"src": "/images/android-chrome-192x192.png",
 			"sizes": "192x192",
 			"type": "image/png"
 		},
 		{
-			"src": "/finger/src/images/android-chrome-512x512.png",
+			"src": "/images/android-chrome-512x512.png",
 			"sizes": "512x512",
 			"type": "image/png"
 		}
