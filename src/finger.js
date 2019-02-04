@@ -908,7 +908,7 @@ class Finger extends HTMLElement {
 			'color:black'
 		);
 		console.log(
-			'* To set the Synth MIDI output channel: Click on the %cpurple synth icon%c on the bottomn right of the screen.',
+			'* To set the Synth MIDI output channel: Click on the %cpurple synth icon%c on the bottom right of the screen.',
 			'color: #698EFF',
 			'color:black'
 		);
