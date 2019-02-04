@@ -932,7 +932,7 @@ class Finger extends HTMLElement {
 		);
 		console.log('');
 		console.log(
-			'%cCopyright notice: All of the visual artwork was made by Teenage Engineering, I am just using it for fun here.',
+			'%cCopyright notice: All of the visual artwork and sequencer patterns were made by Teenage Engineering, I am just using it for fun here.',
 			'color: gray; font-size: 8px'
 		);
 		console.log('');
