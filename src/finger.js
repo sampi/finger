@@ -148,40 +148,6 @@ class Finger extends HTMLElement {
 			'synth-channel',
 			evt => (this.synthChannel = evt.detail)
 		);
-
-		// Allow use of the UI without MIDI keyboards (too buggy right now)
-		// this.addEventListener('click', () => {
-		// 	this.playback = !this.playback;
-		// 	this.hold = this.playback;
-		// });
-
-		// this.shadow.querySelector('#octhigh').addEventListener('click', evt => {
-		// 	evt.stopPropagation();
-		// 	this._toggle('#octhigh', c.CLASS_HIDDEN, true);
-		// 	this._toggle('#octlow', c.CLASS_HIDDEN, false);
-		// });
-		// this.shadow.querySelector('#octlow').addEventListener('click', evt => {
-		// 	evt.stopPropagation();
-		// 	this._toggle('#octhigh', c.CLASS_HIDDEN, false);
-		// 	this._toggle('#octlow', c.CLASS_HIDDEN, true);
-		// });
-
-		// for (let k = 0; k < 7; k++) {
-		// 	this.shadow.querySelector(`#p${k}`).addEventListener('click', evt => {
-		// 		evt.stopPropagation();
-		// 		if (
-		// 			this.shadow
-		// 				.querySelector('#octhigh')
-		// 				.classList.contains(c.CLASS_HIDDEN)
-		// 		) {
-		// 			this.drumPattern = k;
-		// 			this[$drumPlayback] = true;
-		// 		} else {
-		// 			this.synthPattern = k;
-		// 			this[$synthPlayback] = true;
-		// 		}
-		// 	});
-		// }
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
@@ -226,21 +192,6 @@ class Finger extends HTMLElement {
 	get playback() {
 		return this[$playback];
 	}
-
-	// set hold(hold) {
-	// 	hold = stringBool(hold);
-	// 	if (this[$hold] !== hold) {
-	// 		this._toggle('#hold', c.CLASS_FADED, !hold);
-	// 		this[$hold] = hold;
-	// 		this.setAttribute('hold', hold);
-	// 		if (!hold) {
-	// 			this.playback = false;
-	// 		}
-	// 	}
-	// }
-	// get hold() {
-	// 	return this[$hold];
-	// }
 
 	/**
 	 * Set the current drum pattern
@@ -426,9 +377,6 @@ class Finger extends HTMLElement {
 
 		// Send new notes to MIDI out
 		if (notes !== null) {
-			this.shadow
-				.querySelector('finger-settings')
-				.dispatchEvent(new CustomEvent('noteon', { detail: 'synth' }));
 			midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[0]), 127);
 			if (notesArr[1]) {
 				midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[1]), 127);
@@ -531,9 +479,6 @@ class Finger extends HTMLElement {
 
 		// Send new notes to MIDI out
 		if (notes !== null) {
-			this.shadow
-				.querySelector('finger-settings')
-				.dispatchEvent(new CustomEvent('noteon', { detail: 'drum' }));
 			midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[0]), 127);
 			if (notesArr[1]) {
 				midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[1]), 127);
@@ -771,10 +716,6 @@ class Finger extends HTMLElement {
 				return;
 			}
 
-			this.shadow
-				.querySelector('finger-settings')
-				.dispatchEvent(new CustomEvent('noteon', { detail: 'control' }));
-
 			if (patternIdx < 7) {
 				// Left side is for drums
 				// Start playback and show pattern
@@ -816,18 +757,6 @@ class Finger extends HTMLElement {
 			if (patternIdx === undefined) {
 				return;
 			}
-
-			// When the HOLD feature is enabled, playback shouldn't stop when the keys are released (super buggy right now)
-			// if (this.hold) {
-			// 	if (patternIdx < 7) {
-			// 		drumPatterns = [patternIdx];
-			// 		this.drumPattern = drumPatterns[0];
-			// 	} else {
-			// 		synthPatterns = [patternIdx];
-			// 		this.synthPattern = synthPatterns[0];
-			// 	}
-			// 	return;
-			// }
 
 			if (patternIdx < 7) {
 				// Left side is for drums
@@ -956,7 +885,7 @@ class Finger extends HTMLElement {
 			'color: black'
 		);
 		console.log(
-			"* To set the Control MIDI input channel: %cdocument.querySelector('finger-sequencer').setAttribute('control-channel', 16);",
+			"* To set the Control MIDI input channel: %cdocument.querySelector('finger-sequencer').setAttribute('control-channel', 14);",
 			'color: gray'
 		);
 		console.log(

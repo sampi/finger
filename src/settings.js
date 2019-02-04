@@ -8,7 +8,7 @@ class Settings extends HTMLElement {
 		super();
 
 		this.drum = 1;
-		this.control = 16;
+		this.control = 14;
 		this.synth = 8;
 
 		this.stepDuration = 0;
@@ -45,16 +45,6 @@ class Settings extends HTMLElement {
 			);
 			this.render();
 		});
-
-		// Light up the numbers if there is MIDI activity
-		// this.addEventListener('noteon', evt => {
-		// 	this.shadow
-		// 		.querySelector(`.${evt.detail}`)
-		// 		.animate(
-		// 			[{ opacity: 0.5 }, { opacity: 1 }, { opacity: 0.5 }],
-		// 			this.stepDuration * 1000.0
-		// 		);
-		// });
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
