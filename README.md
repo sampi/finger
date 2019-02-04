@@ -12,7 +12,7 @@ To change the MIDI channels, you can use the UI:
 
 - To set the Drum MIDI output channel: Click on the green drum icon on the bottom left of the screen.
 - To set the Control MIDI input channel: Click on the white piano icon on the very bottom of the screen.
-- To set the Synth MIDI output channel: Click on the purple synth icon on the bottom right of the screen.
+- To set the Synth MIDI output channel: Click on the blue synth icon on the bottom right of the screen.
 
 Changing settings is possible by changing the attributes of the `<finger-sequencer>` element:
 
