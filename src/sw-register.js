@@ -6,7 +6,7 @@ if (navigator.serviceWorker.controller) {
 } else {
 	//Register the ServiceWorker
 	navigator.serviceWorker
-		.register('src/sw.js', {
+		.register('/sw.js', {
 			scope: '/'
 		})
 		.then(function(reg) {
