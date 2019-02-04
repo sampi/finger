@@ -103,7 +103,11 @@ export default class MIDI {
 		}
 		for (var output of this[$midi].outputs.values()) {
 			// Send to every MIDI device on the appropriate channel
-			output.send([command + (channel - 1), note, velocity]);
+			// noteTimestamp is set in the main beat loop, so the MIDI notes will be played on time
+			output.send(
+				[command + (channel - 1), note, velocity],
+				this.noteTimestamp
+			);
 		}
 	}
 	/**

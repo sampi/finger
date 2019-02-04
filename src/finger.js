@@ -29,7 +29,8 @@ const [
 	$stepDuration,
 	$midi,
 	$controlChannel,
-	$resizeTimeout
+	$resizeTimeout,
+	$noteScheduled
 ] = [
 	Symbol('playback'),
 	Symbol('hold'),
@@ -39,7 +40,8 @@ const [
 	Symbol('stepDuration'),
 	Symbol('midi'),
 	Symbol('controlChannel'),
-	Symbol('resizeTimeout')
+	Symbol('resizeTimeout'),
+	Symbol('noteScheduled')
 ];
 
 const [
@@ -171,6 +173,8 @@ class Finger extends HTMLElement {
 				this[$drumPlayhead] = 0;
 				this[$synthPlayhead] = 0;
 				this[$timer] = null;
+				// Play the first note
+				this[$noteScheduled] = true;
 				// Start the main loop
 				requestAnimationFrame(this._playBeat.bind(this));
 			} else {
@@ -296,8 +300,12 @@ class Finger extends HTMLElement {
 		let drumPattern = drumPatterns[this[$drumPattern]];
 		let synthPattern = synthPatterns[this[$synthPattern]];
 
-		if (!this[$timer]) {
-			this[$timer] = timestamp;
+		// If there's a note scheduled to play, we'll play it
+		if (this[$noteScheduled]) {
+			// Timer is adjusted to be in line with the beat
+			// (not all BPM's can be divided into 1000/60 ms intervals)
+			this[$timer] = this[$midi].noteTimestamp || timestamp;
+			this[$noteScheduled] = false;
 
 			// Time to play a note, because the timer has been reset
 			if (this[$drumPlayback]) {
@@ -319,18 +327,24 @@ class Finger extends HTMLElement {
 			}
 		}
 
-		// We need to add 2 frames to the progress,
-		// because we schedule them in the current frame,
-		// to be played back in the next frame
-		const twoframes = (1000 / 60) * 2;
-		const progress = timestamp - this[$timer] + twoframes;
-		if (progress >= this[$stepDuration] * 1000.0) {
-			// Whenever it's time to play a note, we will reset the timer
-			this[$timer] = null;
+		// In case we don't know when the loop started, we save it here
+		if (this[$timer] === null) {
+			this[$timer] = timestamp;
+		}
+
+		// This is the main logic of the note scheduler
+		const frameTime = 1000.0 / 60.0;
+		const progress = timestamp - this[$timer];
+		// We look ahead 2 frames (2*16.66ms) to schedule notes
+		if (progress + 2 * frameTime >= this[$stepDuration] * 1000.0) {
+			// Because the timer is being constantly adjusted, we can use it to schedule the next MIDI notes getting sent
+			this[$midi].noteTimestamp = this[$timer] + this[$stepDuration] * 1000.0;
+			this[$noteScheduled] = true;
 
 			this[$drumPlayhead] = ++this[$drumPlayhead] % drumPattern.length;
 			this[$synthPlayhead] = ++this[$synthPlayhead] % synthPattern.length;
 		}
+
 		if (this[$playback]) {
 			// Continue playback
 			requestAnimationFrame(this._playBeat.bind(this));
@@ -341,6 +355,8 @@ class Finger extends HTMLElement {
 
 			this._resetSynths();
 			this._idleSynths();
+			this[$midi].noteTimestamp = 0;
+			this[$timer] = null;
 		}
 	}
 
@@ -699,6 +715,7 @@ class Finger extends HTMLElement {
 		let synthPatterns = [];
 
 		this[$midi] = new MIDI();
+		this[$midi].noteTimestamp = 0;
 		/**
 		 * Handle incoming MIDI note presses
 		 * @param  {int} channel
