@@ -876,7 +876,24 @@ class Finger extends HTMLElement {
 		);
 		console.log('');
 		console.log(
-			'Best controlled from an OP-Z or OP-1, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.'
+			'Best used with an OP-Z or OP-1, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.'
+		);
+		console.log('');
+		console.log('To change the MIDI channels, you can use the UI:');
+		console.log(
+			'* To set the Drum MIDI output channel: Click on the %cgreen drum icon%c on the bottom left of the screen.',
+			'color: #00ED95',
+			'color:black'
+		);
+		console.log(
+			'* To set the Control MIDI input channel: Click on the %cwhite piano icon%c on the very bottom of the screen.',
+			'color: gray',
+			'color:black'
+		);
+		console.log(
+			'* To set the Synth MIDI output channel: Click on the %cpurple synth icon%c on the bottomn right of the screen.',
+			'color: #698EFF',
+			'color:black'
 		);
 		console.log('');
 		console.log(
@@ -885,19 +902,7 @@ class Finger extends HTMLElement {
 			'color: black'
 		);
 		console.log(
-			"* To set the Control MIDI input channel: %cdocument.querySelector('finger-sequencer').setAttribute('control-channel', 14);",
-			'color: gray'
-		);
-		console.log(
-			"* To set the Drum MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
-			'color: gray'
-		);
-		console.log(
-			"* To set the Synth MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 8);",
-			'color: gray'
-		);
-		console.log(
-			"* To set the BPM: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
+			"* To set the BPM: %cdocument.querySelector('finger-sequencer').setAttribute('bpm', 125);",
 			'color: gray'
 		);
 		console.log('');
