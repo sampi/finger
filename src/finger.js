@@ -28,7 +28,8 @@ const [
 	$bpm,
 	$stepDuration,
 	$midi,
-	$controlChannel
+	$controlChannel,
+	$resizeTimeout
 ] = [
 	Symbol('playback'),
 	Symbol('hold'),
@@ -37,7 +38,8 @@ const [
 	Symbol('bpm'),
 	Symbol('stepDuration'),
 	Symbol('midi'),
-	Symbol('controlChannel')
+	Symbol('controlChannel'),
+	Symbol('resizeTimeout')
 ];
 
 const [
@@ -72,85 +74,20 @@ const [
 
 class Finger extends HTMLElement {
 	static get observedAttributes() {
-		return [
-			'playback',
-			'drum-pattern',
-			'synth-pattern',
-			'control-channel',
-			'drum-channel',
-			'synth-channel',
-			'bpm'
-		];
+		return ['control-channel', 'drum-channel', 'synth-channel', 'bpm'];
 	}
 	constructor() {
 		super();
 
-		console.log(
-			'%cWelcome to the OP-1 Finger Sequencer simulator',
-			'font-size: 18px;'
-		);
-		console.log('');
-		console.log(
-			'%cYou can control the sequencer by connecting one or more MIDI devices to your computer.',
-			''
-		);
-		console.log(
-			'Input will be taken from every connected MIDI device on the control channel %c(default: MIDI channel 16),',
-			'color: gray'
-		);
-		console.log(
-			'Output will be sent to two separate channels for drums %c(default: MIDI channel 1)%c and synths %c(default: MIDI channel 8)%c.',
-			'color: gray',
-			'color: black',
-			'color: gray',
-			'color: black'
-		);
-		console.log('');
-		console.log(
-			'Best controlled from an OP-Z or OP-1, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.'
-		);
-		console.log('');
-		console.log(
-			'Changing settings is possible by changing the attributes of the %c<finger-sequencer>%c element:',
-			'color: slate',
-			'color: black'
-		);
-		console.log(
-			"* To set the Control MIDI input channel: %cdocument.querySelector('finger-sequencer').setAttribute('control-channel', 16);",
-			'color: gray'
-		);
-		console.log(
-			"* To set the Drum MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
-			'color: gray'
-		);
-		console.log(
-			"* To set the Synth MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 8);",
-			'color: gray'
-		);
-		console.log(
-			"* To set the BPM: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
-			'color: gray'
-		);
-		console.log('');
-		console.log('Have fun playing!');
-		console.log('');
-		console.log(
-			'%cMade by: %cDaniel Spitzer <github.com/sampi>',
-			'color: grey',
-			'color: slate'
-		);
-		console.log('');
-		console.log(
-			'%cCopyright notice: All of the visual artwork was made by Teenage Engineering, I am just using it for fun here.',
-			'color: gray; font-size: 8px'
-		);
-		console.log('');
+		this._printWelcomeText();
 
 		// Set some defaults
 		this[$playback] = false;
 		this[$drumPlayback] = false;
 		this[$synthPlayback] = false;
 		this[$bpm] = parseFloat(40);
+		this[$drumPattern] = 0;
+		this[$synthPattern] = 0;
 		this[$activeDrumNotes] = null;
 		this[$activeSynthNotes] = null;
 		this[$controlChannel] = 16;
@@ -163,14 +100,16 @@ class Finger extends HTMLElement {
 
 		// Show the SVG
 		this.shadow = this.attachShadow({ mode: 'open' });
-		this.shadow.innerHTML = `
-			<style>
-				${css}
-			</style>
-		`;
+
+		const style = document.createElement('style');
+		style.appendChild(document.createTextNode(css));
+		this.shadow.appendChild(style);
+
 		this.shadow.appendChild(
 			document.getElementById('finger-svg').content.cloneNode(true)
 		);
+
+		this.shadow.appendChild(document.createElement('finger-settings'));
 	}
 
 	// We're in the DOM
@@ -183,6 +122,32 @@ class Finger extends HTMLElement {
 
 		this._resetSynths();
 		this._idleSynths();
+
+		this._updatePatternUI();
+
+		// Resize the settings bar and the SVG together
+		setTimeout(() => this._sendSettingSizing());
+		window.addEventListener('resize', () => {
+			clearTimeout(this[$resizeTimeout]);
+			this[$resizeTimeout] = setTimeout(() => {
+				this._sendSettingSizing();
+			}, 100);
+		});
+
+		// Adjust the MIDI channels if they are sent from the settings
+		const settings = this.shadow.querySelector('finger-settings');
+		settings.addEventListener(
+			'drum-channel',
+			evt => (this.drumChannel = evt.detail)
+		);
+		settings.addEventListener(
+			'control-channel',
+			evt => (this.controlChannel = evt.detail)
+		);
+		settings.addEventListener(
+			'synth-channel',
+			evt => (this.synthChannel = evt.detail)
+		);
 
 		// Allow use of the UI without MIDI keyboards (too buggy right now)
 		// this.addEventListener('click', () => {
@@ -256,7 +221,6 @@ class Finger extends HTMLElement {
 				}
 			}
 			this[$playback] = playback;
-			this.setAttribute('playback', playback);
 		}
 	}
 	get playback() {
@@ -285,7 +249,6 @@ class Finger extends HTMLElement {
 	set drumPattern(drumPattern) {
 		if (this[$drumPattern] !== parseInt(drumPattern, 10)) {
 			this[$drumPattern] = parseInt(drumPattern, 10);
-			this.setAttribute('drum-pattern', drumPattern);
 			// Make the drums show up in the middle pattern view
 			this[$displayInstrument] = 'drum';
 			this._updatePatternUI();
@@ -302,7 +265,6 @@ class Finger extends HTMLElement {
 	set synthPattern(synthPattern) {
 		if (this[$synthPattern] !== parseInt(synthPattern, 10)) {
 			this[$synthPattern] = parseInt(synthPattern, 10);
-			this.setAttribute('synth-pattern', synthPattern);
 			// Make the synth show up in the middle pattern view
 			this[$displayInstrument] = 'synth';
 			this._updatePatternUI();
@@ -321,7 +283,12 @@ class Finger extends HTMLElement {
 			this[$bpm] = parseFloat(bpm);
 			this[$stepDuration] = 60.0 / this[$bpm] / 4.0;
 			this.setAttribute('bpm', parseFloat(bpm));
-			this.style.setProperty('--beat-s', this[$stepDuration] + 's');
+			this.shadow
+				.querySelector('svg')
+				.style.setProperty('--beat-s', this[$stepDuration] + 's');
+			this.shadow
+				.querySelector('finger-settings')
+				.setAttribute('step-duration', this[$stepDuration]);
 		}
 	}
 	get bpm() {
@@ -459,6 +426,9 @@ class Finger extends HTMLElement {
 
 		// Send new notes to MIDI out
 		if (notes !== null) {
+			this.shadow
+				.querySelector('finger-settings')
+				.dispatchEvent(new CustomEvent('noteon', { detail: 'synth' }));
 			midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[0]), 127);
 			if (notesArr[1]) {
 				midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[1]), 127);
@@ -561,6 +531,9 @@ class Finger extends HTMLElement {
 
 		// Send new notes to MIDI out
 		if (notes !== null) {
+			this.shadow
+				.querySelector('finger-settings')
+				.dispatchEvent(new CustomEvent('noteon', { detail: 'drum' }));
 			midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[0]), 127);
 			if (notesArr[1]) {
 				midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[1]), 127);
@@ -798,6 +771,10 @@ class Finger extends HTMLElement {
 				return;
 			}
 
+			this.shadow
+				.querySelector('finger-settings')
+				.dispatchEvent(new CustomEvent('noteon', { detail: 'control' }));
+
 			if (patternIdx < 7) {
 				// Left side is for drums
 				// Start playback and show pattern
@@ -932,6 +909,82 @@ class Finger extends HTMLElement {
 		asArrayLike(selector).forEach(s => {
 			this.shadow.querySelector(s).classList.toggle(className, force);
 		});
+	}
+
+	_sendSettingSizing() {
+		const holdRect = this.shadow.querySelector('#hold').getBoundingClientRect();
+		const drumRect = this.shadow.querySelector('#drum').getBoundingClientRect();
+
+		const settingsStyle = this.shadow.querySelector('finger-settings').style;
+		settingsStyle.setProperty('--settings-height', `${holdRect.height}px`);
+		settingsStyle.setProperty('--settings-width', `${drumRect.width}px`);
+
+		this.shadow
+			.querySelector('svg')
+			.style.setProperty('--settings-height', `${holdRect.height}px`);
+	}
+
+	_printWelcomeText() {
+		console.log(
+			'%cWelcome to the OP-1 Finger Sequencer simulator',
+			'font-size: 18px;'
+		);
+		console.log('');
+		console.log(
+			'%cYou can control the sequencer by connecting one or more MIDI devices to your computer.',
+			''
+		);
+		console.log(
+			'Input will be taken from every connected MIDI device on the control channel %c(default: MIDI channel 16),',
+			'color: gray'
+		);
+		console.log(
+			'Output will be sent to two separate channels for drums %c(default: MIDI channel 1)%c and synths %c(default: MIDI channel 8)%c.',
+			'color: gray',
+			'color: black',
+			'color: gray',
+			'color: black'
+		);
+		console.log('');
+		console.log(
+			'Best controlled from an OP-Z or OP-1, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.'
+		);
+		console.log('');
+		console.log(
+			'Changing settings is possible by changing the attributes of the %c<finger-sequencer>%c element:',
+			'color: slate',
+			'color: black'
+		);
+		console.log(
+			"* To set the Control MIDI input channel: %cdocument.querySelector('finger-sequencer').setAttribute('control-channel', 16);",
+			'color: gray'
+		);
+		console.log(
+			"* To set the Drum MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
+			'color: gray'
+		);
+		console.log(
+			"* To set the Synth MIDI output channel: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 8);",
+			'color: gray'
+		);
+		console.log(
+			"* To set the BPM: %cdocument.querySelector('finger-sequencer').setAttribute('drum-channel', 1);",
+			'color: gray'
+		);
+		console.log('');
+		console.log('Have fun playing!');
+		console.log('');
+		console.log(
+			'%cMade by: %cDaniel Spitzer <github.com/sampi>',
+			'color: grey',
+			'color: slate'
+		);
+		console.log('');
+		console.log(
+			'%cCopyright notice: All of the visual artwork was made by Teenage Engineering, I am just using it for fun here.',
+			'color: gray; font-size: 8px'
+		);
+		console.log('');
 	}
 }
 

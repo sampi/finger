@@ -3,34 +3,36 @@
  * and webpack/rollup would take care of importing it.
  */
 export default `
-/*
-:host {
-	cursor: pointer;
-} */
 
 :host > svg {
+	box-sizing: border-box;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: var(--settings-height, 10%);
 	width: 100%;
-	height: 100%;
+	height: calc(100% - var(--settings-height, 10%));
 }
-:host .hidden {
+.hidden {
 	opacity: 0;
 }
-:host .faded {
+.faded {
 	opacity: 0.2;
 }
 
-:host #keys > g {
+#keys > g {
 	pointer-events: bounding-box;
 }
-:host #keys > g > path {
+#keys > g > path {
 	stroke: #5E5F8F !important;
 }
-:host #keys .active > path {
+#keys .active > path {
 	stroke: #DFD9FF !important;
 	stroke-linecap: square !important;
 }
 /* Hit animation */
-:host .hit {
+.hit {
 	animation-name: hit;
 	animation-duration: var(--beat-s);
 	animation-iteration-count: infinite;
@@ -48,10 +50,10 @@ export default `
 }
 
 /* Kick-drum hit animation */
-:host #ad0.hit,
-:host #ad1.hit,
-:host #bd0.hit,
-:host #bd1.hit {
+#ad0.hit,
+#ad1.hit,
+#bd0.hit,
+#bd1.hit {
 	transform-box: fill-box;
 	transform-origin: center;
 	animation-name: kick-hit;
@@ -75,10 +77,10 @@ export default `
 		opacity:  0;
 	}
 }
-:host #ad0.hit > line,
-:host #ad1.hit > line,
-:host #bd0.hit > line,
-:host #bd1.hit > line{
+#ad0.hit > line,
+#ad1.hit > line,
+#bd0.hit > line,
+#bd1.hit > line{
 	animation-name: kick-hit-line;
 }
 @keyframes kick-hit-line {
@@ -94,8 +96,8 @@ export default `
 }
 
 /* Synth hand animation */
-:host #hbld.hit,
-:host #hbrd.hit {
+#hbld.hit,
+#hbrd.hit {
 	animation-name: hand-hit;
 }
 @keyframes hand-hit {
@@ -108,18 +110,18 @@ export default `
 }
 
 /* Synth key animation */
-:host #bk0.hit,
-:host #bk1.hit,
-:host #bk2.hit,
-:host #bk3.hit,
-:host #bk4.hit,
-:host #bk5.hit,
-:host #bk6.hit,
-:host #bk7.hit,
-:host #bk8.hit,
-:host #bk9.hit,
-:host #bk10.hit,
-:host #bk11.hit {
+#bk0.hit,
+#bk1.hit,
+#bk2.hit,
+#bk3.hit,
+#bk4.hit,
+#bk5.hit,
+#bk6.hit,
+#bk7.hit,
+#bk8.hit,
+#bk9.hit,
+#bk10.hit,
+#bk11.hit {
 	animation-name: key-hit;
 }
 @keyframes key-hit {
@@ -129,6 +131,16 @@ export default `
 	to {
 		transform: translateY(2.93px);
 	}
+}
+
+
+finger-settings {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: var(--settings-height, 10%);
+	/* opacity:  0.5; */
 }
 
 `;

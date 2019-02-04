@@ -1,3 +1,10 @@
+@font-face {
+	font-family: 'OP-1';
+	src: url('/fonts/OP-1.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
+
 :root {
 	--beat-s: 0.25s;
 	--translate-x: 0;
@@ -12,6 +19,7 @@ body {
 	height: 100%;
 	background: black;
 	overflow: hidden;
+	user-select: none;
 }
 
 finger-sequencer {
