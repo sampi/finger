@@ -36,6 +36,7 @@ export default `
 	font-size: calc(0.6 * var(--settings-height));
 	font-kerning: auto;
 	opacity: 0.5;
+	cursor: pointer;
 }
 .drum {
 	left: 0;

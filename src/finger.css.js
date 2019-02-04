@@ -13,6 +13,7 @@ export default `
 	bottom: var(--settings-height, 10%);
 	width: 100%;
 	height: calc(100% - var(--settings-height, 10%));
+	cursor: default;
 }
 .hidden {
 	opacity: 0;
