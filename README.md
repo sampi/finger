@@ -1,6 +1,10 @@
 ## Welcome to the OP-1 Finger Sequencer simulator
 
-[Live demo](https://finger.sampi.io/)
+### Try it out!
+[https://finger.sampi.io](https://finger.sampi.io/)
+
+### YouTube video
+[![YouTube demo](https://img.youtube.com/vi/AizpaaGNmSk/maxresdefault.jpg)](https://www.youtube.com/watch?v=AizpaaGNmSk)
 
 You can control the sequencer by connecting one or more MIDI devices to your computer.
 Input will be taken from every connected MIDI device on the control channel _(default: MIDI channel 14)_,
