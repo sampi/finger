@@ -881,7 +881,7 @@ class Finger extends HTMLElement {
 			''
 		);
 		console.log(
-			'Input will be taken from every connected MIDI device on the control channel %c(default: MIDI channel 16),',
+			'Input will be taken from every connected MIDI device on the control channel %c(default: MIDI channel 14),',
 			'color: gray'
 		);
 		console.log(
@@ -893,22 +893,22 @@ class Finger extends HTMLElement {
 		);
 		console.log('');
 		console.log(
-			'Best used with an OP-Z or OP-1, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.'
+			'Best used with an OP-Z, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.'
 		);
 		console.log('');
 		console.log('To change the MIDI channels, you can use the UI:');
 		console.log(
-			'* To set the Drum MIDI output channel: Click on the %cgreen drum icon%c on the bottom left of the screen.',
+			'* To change the Drum MIDI output channel: Click on the %cgreen drum icon%c on the bottom left of the screen.',
 			'color: #00ED95',
 			'color:black'
 		);
 		console.log(
-			'* To set the Control MIDI input channel: Click on the %cwhite piano icon%c on the very bottom of the screen.',
+			'* To change the Control MIDI input channel: Click on the %cwhite piano icon%c on the very bottom of the screen.',
 			'color: gray',
 			'color:black'
 		);
 		console.log(
-			'* To set the Synth MIDI output channel: Click on the %blue synth icon%c on the bottom right of the screen.',
+			'* To change the Synth MIDI output channel: Click on the %cblue synth icon%c on the bottom right of the screen.',
 			'color: #698EFF',
 			'color:black'
 		);
@@ -926,9 +926,15 @@ class Finger extends HTMLElement {
 		console.log('Have fun playing!');
 		console.log('');
 		console.log(
-			'%cMade by: %cDaniel Spitzer <github.com/sampi>',
+			'%cMade by: %cDaniel Spitzer - %cgithub.com/sampi',
 			'color: grey',
-			'color: slate'
+			'color: slate',
+			'color: grey'
+		);
+		console.log('');
+		console.log(
+			'%cBrowser compatibility: Any browser with support for the Web MIDI API (Google Chrome (desktop & Android), Android Browser, Samsung Internet)',
+			'color: gray; font-size: 10px'
 		);
 		console.log('');
 		console.log(
